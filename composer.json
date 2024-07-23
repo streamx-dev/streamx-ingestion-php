@@ -1,0 +1,12 @@
+{
+  "name": "streamx/ingestion-client",
+  "description": "PHP ingestion client for StreamX - a Digital Experience Data Mesh.",
+  "version": "0.0.1",
+  "type": "library",
+  "autoload": {
+    "psr-4": {
+      "Streamx\\Clients\\Ingestion\\": "src/"
+    }
+  },
+  "require": {}
+}
