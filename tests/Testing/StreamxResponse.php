@@ -4,14 +4,16 @@ namespace Streamx\Clients\Ingestion\Tests\Testing;
 
 use donatj\MockWebServer\Response;
 use Streamx\Clients\Ingestion\Impl\FailureResponse;
-use Streamx\Clients\Ingestion\Publisher\PublisherSuccessResult;
+use Streamx\Clients\Ingestion\Impl\MessageStatus;
+use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 
 class StreamxResponse
 {
-    public static function success(int $eventTime): Response
+    public static function success(int $eventTime, string $key): Response
     {
-        $successResult = new PublisherSuccessResult($eventTime);
-        $json = json_encode($successResult);
+        $successResult = new SuccessResult($eventTime, $key);
+        $messageStatus = MessageStatus::ofSuccess($successResult);
+        $json = json_encode($messageStatus);
         return new Response($json, [], 202);
     }
 

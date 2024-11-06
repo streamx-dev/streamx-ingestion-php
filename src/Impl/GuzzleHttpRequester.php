@@ -11,7 +11,7 @@ use Psr\Http\Message\UriInterface;
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
 use Streamx\Clients\Ingestion\Impl\Utils\DataValidationException;
 use Streamx\Clients\Ingestion\Publisher\HttpRequester;
-use Streamx\Clients\Ingestion\Publisher\PublisherSuccessResult;
+use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 
 class GuzzleHttpRequester implements HttpRequester
 {
@@ -21,34 +21,18 @@ class GuzzleHttpRequester implements HttpRequester
     ) {
     }
 
-    public function executePut(
+    public function executePost(
         UriInterface $endpointUri,
         array $headers,
         string $json
-    ): PublisherSuccessResult {
+    ): SuccessResult {
         try {
-            $actualHeaders = ['Content-Type' => 'application/json; charset=UTF-8'];
-            $actualHeaders = array_merge($actualHeaders, $headers);
-            $request = new Request('PUT', $endpointUri, $actualHeaders, $json);
+            $request = new Request('POST', $endpointUri, $headers, $json);
             $response = $this->httpClient->sendRequest($request);
             return $this->handleResponse($response);
         } catch (ClientExceptionInterface $e) {
             throw new StreamxClientException(
-                sprintf('PUT request with URI: %s failed due to HTTP client error', $endpointUri),
-                $e);
-        }
-    }
-
-    public function executeDelete(UriInterface $endpointUri, array $headers): PublisherSuccessResult
-    {
-        try {
-            $request = new Request('DELETE', $endpointUri, $headers);
-            $response = $this->httpClient->sendRequest($request);
-            return $this->handleResponse($response);
-        } catch (ClientExceptionInterface $e) {
-            throw new StreamxClientException(
-                sprintf('DELETE request with URI: %s failed due to HTTP client error',
-                    $endpointUri),
+                sprintf('POST request with URI: %s failed due to HTTP client error', $endpointUri),
                 $e);
         }
     }
@@ -56,19 +40,23 @@ class GuzzleHttpRequester implements HttpRequester
     /**
      * @throws StreamxClientException
      */
-    private function handleResponse(ResponseInterface $response): PublisherSuccessResult
+    private function handleResponse(ResponseInterface $response): SuccessResult
     {
         $statusCode = $response->getStatusCode();
         switch ($statusCode) {
+            // TODO: introduce full exceptions hierarchy (split StreamxClientException), as in StreamX Java Client
             case 202:
-                return $this->parseSuccessResponse($response);
+                $messageStatus = $this->parseMessageStatus($response);
+                if ($messageStatus->getSuccess() != null) {
+                    return $messageStatus->getSuccess();
+                } else {
+                    throw $this->streamxClientExceptionFrom($messageStatus->getFailure());
+                }
             case 400:
+            case 403:
             case 500:
                 $failureResponse = $this->parseFailureResponse($response);
-                throw new StreamxClientException(
-                    sprintf('Publication Ingestion REST endpoint known error. Code: %s. Message: %s',
-                        $failureResponse->getErrorCode(),
-                        $failureResponse->getErrorMessage()));
+                throw $this->streamxClientExceptionFrom($failureResponse);
             case 401:
                 throw new StreamxClientException('Authentication failed. Make sure that the given token is valid.');
             default:
@@ -82,10 +70,12 @@ class GuzzleHttpRequester implements HttpRequester
     /**
      * @throws StreamxClientException
      */
-    private function parseSuccessResponse(ResponseInterface $response): PublisherSuccessResult
+    private function parseMessageStatus(ResponseInterface $response): MessageStatus
     {
-        return $this->parseResponse($response,
-            fn($json) => PublisherSuccessResultDeserializer::fromJson($json));
+        return $this->parseResponse(
+            $response,
+            fn($json) => MessageStatus::fromJson($json)
+        );
     }
 
     /**
@@ -93,7 +83,10 @@ class GuzzleHttpRequester implements HttpRequester
      */
     private function parseFailureResponse(ResponseInterface $response): FailureResponse
     {
-        return $this->parseResponse($response, fn($json) => FailureResponse::fromJson($json));
+        return $this->parseResponse(
+            $response,
+            fn($json) => FailureResponse::fromJson($json)
+        );
     }
 
     /**
@@ -123,4 +116,13 @@ class GuzzleHttpRequester implements HttpRequester
         }
         return $jsonObject;
     }
+
+    private function streamxClientExceptionFrom(FailureResponse $failureResponse): StreamxClientException{
+        $errorCode = $failureResponse->getErrorCode();
+        $exceptionMessage = sprintf(
+            'Ingestion REST endpoint known error. Code: %s. Message: %s',
+            $errorCode, $failureResponse->getErrorMessage()
+        );
+        return new StreamxClientException($exceptionMessage);
+      }
 }

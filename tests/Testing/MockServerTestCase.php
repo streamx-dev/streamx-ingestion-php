@@ -18,7 +18,7 @@ class MockServerTestCase extends TestCase
     {
         self::$server = new MockWebServer();
         self::$server->start();
-        self::$server->setDefaultResponse(StreamxResponse::success(-1));
+        self::$server->setDefaultResponse(StreamxResponse::success(-1, 'any'));
     }
 
     protected function setUp(): void
@@ -31,26 +31,38 @@ class MockServerTestCase extends TestCase
         self::$server->stop();
     }
 
-    protected function assertPut(
+    protected function assertPublishPostRequest(
         RequestInfo $request,
         string $uri,
-        string $body,
+        string $key,
+        string $payload,
         array $headers = null
     ): void {
-        $this->assertEquals('PUT', $request->getRequestMethod());
-        $this->assertEquals($uri, $request->getRequestUri());
-        $this->assertEquals('application/json; charset=UTF-8',
-            $request->getHeaders()['Content-Type']);
-        $this->assertEquals($body, $request->getInput());
-        $this->assertHeaders($request, $headers);
+        $expectedBody = '{"key":"'.$key.'","action":"publish","eventTime":null,"properties":[],"payload":'.$payload.'}';
+        $this->assertIngestionPostRequest($request, $uri, $expectedBody, $headers);
+        $this->assertEquals('application/json; charset=UTF-8', $request->getHeaders()['Content-Type']);
     }
 
-    protected function assertDelete(RequestInfo $request, string $uri, array $headers = null): void
-    {
-        $this->assertEquals('DELETE', $request->getRequestMethod());
-        $this->assertEquals($uri, $request->getRequestUri());
+    protected function assertUnpublishPostRequest(
+        RequestInfo $request,
+        string $uri,
+        string $key,
+        array $headers = null
+    ): void {
+        $expectedBody = '{"key":"'.$key.'","action":"unpublish","eventTime":null,"properties":[],"payload":null}';
+        $this->assertIngestionPostRequest($request, $uri, $expectedBody, $headers);
         $this->assertArrayNotHasKey('Content-Type', $request->getHeaders());
-        $this->assertEmpty($request->getInput());
+    }
+
+    private function assertIngestionPostRequest(
+        RequestInfo $request,
+        string $uri,
+        string $expectedBody,
+        array $headers = null
+    ): void {
+        $this->assertEquals('POST', $request->getRequestMethod());
+        $this->assertEquals($uri, $request->getRequestUri());
+        $this->assertEquals($expectedBody, $request->getInput());
         $this->assertHeaders($request, $headers);
     }
 

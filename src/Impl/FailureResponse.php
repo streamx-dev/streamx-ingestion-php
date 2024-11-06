@@ -15,8 +15,11 @@ class FailureResponse implements JsonSerializable
     ) {
     }
 
-    public static function fromJson(StdClass $json): FailureResponse
+    public static function fromJson(?StdClass $json): ?FailureResponse
     {
+        if ($json == null) {
+            return null;
+        }
         $dataValidator = DataValidator::for($json);
         return new FailureResponse(
             $dataValidator->require('errorCode'),

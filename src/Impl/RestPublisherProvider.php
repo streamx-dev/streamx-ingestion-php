@@ -11,7 +11,7 @@ class RestPublisherProvider
 {
 
     public function __construct(
-        private readonly UriInterface $publicationsEndpointUri,
+        private readonly UriInterface $ingestionEndpointUri,
         private readonly ?string $authToken,
         private readonly HttpRequester $httpRequester,
         private readonly JsonProvider $jsonProvider
@@ -20,7 +20,12 @@ class RestPublisherProvider
 
     public function newPublisher(string $channel): Publisher
     {
-        return new RestPublisher($this->publicationsEndpointUri, $channel, $this->authToken,
-            $this->httpRequester, $this->jsonProvider);
+        return new RestPublisher(
+            $this->ingestionEndpointUri,
+            $channel,
+            $this->authToken,
+            $this->httpRequester,
+            $this->jsonProvider
+        );
     }
 }

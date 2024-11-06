@@ -14,7 +14,7 @@ class CustomTestJsonProvider implements JsonProvider
     public function getJson(object|array $data): string
     {
         $data = (array)$data;
-        $data['customProperty'] = $this->customFieldValue;
+        $data['payload']['customProperty'] = $this->customFieldValue;
         return json_encode($data);
     }
 }

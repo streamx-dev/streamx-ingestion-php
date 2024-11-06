@@ -8,67 +8,75 @@ use Streamx\Clients\Ingestion\Builders\StreamxClientBuilders;
 use Streamx\Clients\Ingestion\Tests\Testing\Impl\CustomTestHttpRequester;
 use Streamx\Clients\Ingestion\Tests\Testing\Impl\CustomTestJsonProvider;
 use Streamx\Clients\Ingestion\Tests\Testing\MockServerTestCase;
+use Streamx\Clients\Ingestion\Tests\Testing\StreamxResponse;
 use Symfony\Component\HttpClient\Psr18Client;
 
 class RestStreamxClientBuilderTest extends MockServerTestCase
 {
 
     #[Test]
-    public function shouldSetCustomPublicationsEndpointUri()
+    public function shouldSetCustomIngestionEndpointUri()
     {
         // Given
+        $key = 'key';
         $data = ['message' => 'test'];
 
-        self::$server->setResponseOfPath('/custom-publications/v2/channel/key',
-            new Response('{"eventTime":"836383"}', [], 202));
+        self::$server->setResponseOfPath('/custom-ingestion/v2/channels/channel/messages',
+            StreamxResponse::success(836383, $key));
 
         $this->client = StreamxClientBuilders::create(self::$server->getServerRoot())
-            ->setPublicationsEndpointUri('/custom-publications/v2')
+            ->setIngestionEndpointUri('/custom-ingestion/v2')
             ->build();
 
         // When
-        $result = $this->client->newPublisher("channel")->publish("key", $data);
+        $result = $this->client->newPublisher("channel")->publish($key, $data);
 
         // Then
-        $this->assertPut(self::$server->getLastRequest(),
-            '/custom-publications/v2/channel/key',
+        $this->assertPublishPostRequest(self::$server->getLastRequest(),
+            '/custom-ingestion/v2/channels/channel/messages',
+            $key,
             '{"message":"test"}');
 
         $this->assertEquals(836383, $result->getEventTime());
+        $this->assertEquals($key, $result->getKey());
     }
 
     #[Test]
     public function shouldSetCustomHttpRequester()
     {
         // Given
+        $key = 'key';
         $data = ['message' => 'custom requester'];
 
-        self::$server->setResponseOfPath('/custom-requester-publications/v1/channel/key',
-            new Response('{"eventTime":"937493"}', [], 202));
+        self::$server->setResponseOfPath('/custom-requester-ingestion/v1/channels/channel/messages',
+            StreamxResponse::success(937493, $key));
 
         $this->client = StreamxClientBuilders::create(self::$server->getServerRoot())
-            ->setHttpRequester(new CustomTestHttpRequester('/custom-requester-publications/v1'))
+            ->setHttpRequester(new CustomTestHttpRequester('/custom-requester-ingestion/v1'))
             ->build();
 
         // When
         $result = $this->client->newPublisher("channel")->publish("key", $data);
 
         // Then
-        $this->assertPut(self::$server->getLastRequest(),
-            '/custom-requester-publications/v1/channel/key',
+        $this->assertPublishPostRequest(self::$server->getLastRequest(),
+            '/custom-requester-ingestion/v1/channels/channel/messages',
+            $key,
             '{"message":"custom requester"}');
 
         $this->assertEquals(937493, $result->getEventTime());
+        $this->assertEquals($key, $result->getKey());
     }
 
     #[Test]
     public function shouldSetCustomHttpClient()
     {
         // Given
+        $key = 'key';
         $data = ['message' => 'custom http client'];
 
-        self::$server->setResponseOfPath('/publications/v1/channel/key',
-            new Response('{"eventTime":"937493"}', [], 202));
+        self::$server->setResponseOfPath('/ingestion/v1/channels/channel/messages',
+            StreamxResponse::success(937493, $key));
 
         $symphonyClient = (new Psr18Client())->withOptions(['headers' => ['X-StreamX' => 'Custom http client']]);
 
@@ -80,22 +88,25 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
         $result = $this->client->newPublisher("channel")->publish("key", $data);
 
         // Then
-        $this->assertPut(self::$server->getLastRequest(),
-            '/publications/v1/channel/key',
+        $this->assertPublishPostRequest(self::$server->getLastRequest(),
+            '/ingestion/v1/channels/channel/messages',
+            'key',
             '{"message":"custom http client"}',
             ['X-StreamX' => 'Custom http client']);
 
         $this->assertEquals(937493, $result->getEventTime());
+        $this->assertEquals($key, $result->getKey());
     }
 
     #[Test]
     public function shouldSetCustomJsonProvider()
     {
         // Given
+        $key = 'key';
         $data = ['property' => 'original'];
 
-        self::$server->setResponseOfPath('/publications/v1/channel/key',
-            new Response('{"eventTime":"625436"}', [], 202));
+        self::$server->setResponseOfPath('/ingestion/v1/channels/channel/messages',
+            StreamxResponse::success(625436, $key));
 
         $this->client = StreamxClientBuilders::create(self::$server->getServerRoot())
             ->setJsonProvider(new CustomTestJsonProvider('Added by custom Json Provider'))
@@ -105,10 +116,12 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
         $result = $this->client->newPublisher("channel")->publish("key", $data);
 
         // Then
-        $this->assertPut(self::$server->getLastRequest(),
-            '/publications/v1/channel/key',
+        $this->assertPublishPostRequest(self::$server->getLastRequest(),
+            '/ingestion/v1/channels/channel/messages',
+            'key',
             '{"property":"original","customProperty":"Added by custom Json Provider"}');
 
         $this->assertEquals(625436, $result->getEventTime());
+        $this->assertEquals($key, $result->getKey());
     }
 }

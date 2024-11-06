@@ -22,6 +22,14 @@ class DataValidator
         throw new DataValidationException("Property [$property] is required");
     }
 
+    public function retrieveNullable(string $property): mixed
+    {
+        if (property_exists($this->object, $property)) {
+            return $this->object->{$property};
+        }
+        return null;
+    }
+
     private function requireNonNull(mixed $value, string $name): mixed
     {
         if ($value == null) {

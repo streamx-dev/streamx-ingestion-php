@@ -8,33 +8,42 @@ use Streamx\Clients\Ingestion\Impl\Utils\HttpUtils;
 use Streamx\Clients\Ingestion\Publisher\HttpRequester;
 use Streamx\Clients\Ingestion\Publisher\JsonProvider;
 use Streamx\Clients\Ingestion\Publisher\Publisher;
-use Streamx\Clients\Ingestion\Publisher\PublisherSuccessResult;
+use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 
 class RestPublisher implements Publisher
 {
     private array $headers;
+    private UriInterface $messageIngestionEndpointUri;
 
     public function __construct(
-        private readonly UriInterface $publicationsEndpointUri,
+        UriInterface $ingestionEndpointUri,
         private readonly string $channel,
         ?string $authToken,
         private readonly HttpRequester $httpRequester,
         private readonly JsonProvider $jsonProvider
     ) {
         $this->headers = $this->buildHttpHeaders($authToken);
+        $this->messageIngestionEndpointUri = $this->buildMessageIngestionUri($ingestionEndpointUri, $channel);
     }
 
-    public function publish(string $key, object|array $data): PublisherSuccessResult
+    public function publish(string $key, object|array $payload): SuccessResult
     {
-        $json = $this->jsonProvider->getJson($data);
-        $endpointUri = $this->buildPublicationsUri($key);
-        return $this->httpRequester->executePut($endpointUri, $this->headers, $json);
+        $message = Message::newPublishMessage($key, $payload);
+        $actualHeaders = array_merge($this->headers, ['Content-Type' => 'application/json; charset=UTF-8']);
+        return $this->ingest($message, $actualHeaders);
     }
 
-    public function unpublish(string $key): PublisherSuccessResult
+    public function unpublish(string $key): SuccessResult
     {
-        $endpointUri = $this->buildPublicationsUri($key);
-        return $this->httpRequester->executeDelete($endpointUri, $this->headers);
+        $message = Message::newUnpublishMessage($key);
+        return $this->ingest($message, $this->headers);
+    }
+
+    private function ingest(Message $message, $headers): SuccessResult
+    {
+        // TODO: fetch schema for the channel, and use it to generate valid JSON
+        $json = $this->jsonProvider->getJson($message);
+        return $this->httpRequester->executePost($this->messageIngestionEndpointUri, $headers, $json);
     }
 
     private function buildHttpHeaders(?string $authToken): array
@@ -48,8 +57,8 @@ class RestPublisher implements Publisher
     /**
      * @throws StreamxClientException
      */
-    private function buildPublicationsUri(string $key): UriInterface
+    private function buildMessageIngestionUri(UriInterface $ingestionEndpointUri, string $channel): UriInterface
     {
-        return HttpUtils::buildUri("$this->publicationsEndpointUri/$this->channel/$key");
+        return HttpUtils::buildUri("$ingestionEndpointUri/channels/$channel/messages");
     }
 }
