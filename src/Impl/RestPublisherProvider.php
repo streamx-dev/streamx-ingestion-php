@@ -18,11 +18,12 @@ class RestPublisherProvider
     ) {
     }
 
-    public function newPublisher(string $channel): Publisher
+    public function newPublisher(string $channel, string $channelSchemaJson): Publisher
     {
         return new RestPublisher(
             $this->ingestionEndpointUri,
             $channel,
+            $channelSchemaJson,
             $this->authToken,
             $this->httpRequester,
             $this->jsonProvider

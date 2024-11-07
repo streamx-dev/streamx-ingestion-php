@@ -3,6 +3,7 @@
 namespace Streamx\Clients\Ingestion\Publisher;
 
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
+use Streamx\Clients\Ingestion\Impl\Message;
 
 /**
  * An interface that allows to inject custom JSON Provider.
@@ -11,9 +12,10 @@ interface JsonProvider
 {
     /**
      * Generates JSON string from input data.
-     * @param array|object $data Source data for JSON.
+     * @param Message $message Source ingestion message.
+     * @param string $schemaJson Schema to use for serializing the message to JSON.
      * @return string Created JSON.
      * @throws StreamxClientException
      */
-    public function getJson(array|object $data): string;
+    public function getJson(Message $message, string $schemaJson): string;
 }

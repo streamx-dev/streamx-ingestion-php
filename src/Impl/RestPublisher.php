@@ -4,6 +4,7 @@ namespace Streamx\Clients\Ingestion\Impl;
 
 use Psr\Http\Message\UriInterface;
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
+use Streamx\Clients\Ingestion\Impl\Message;
 use Streamx\Clients\Ingestion\Impl\Utils\HttpUtils;
 use Streamx\Clients\Ingestion\Publisher\HttpRequester;
 use Streamx\Clients\Ingestion\Publisher\JsonProvider;
@@ -18,6 +19,7 @@ class RestPublisher implements Publisher
     public function __construct(
         UriInterface $ingestionEndpointUri,
         private readonly string $channel,
+        private readonly string $channelSchemaJson,
         ?string $authToken,
         private readonly HttpRequester $httpRequester,
         private readonly JsonProvider $jsonProvider
@@ -41,8 +43,7 @@ class RestPublisher implements Publisher
 
     private function ingest(Message $message, $headers): SuccessResult
     {
-        // TODO: fetch schema for the channel, and use it to generate valid JSON
-        $json = $this->jsonProvider->getJson($message);
+        $json = $this->jsonProvider->getJson($message, $this->channelSchemaJson);
         return $this->httpRequester->executePost($this->messageIngestionEndpointUri, $headers, $json);
     }
 

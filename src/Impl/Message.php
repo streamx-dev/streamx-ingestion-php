@@ -10,7 +10,7 @@ class Message
         public string $key,
         public string $action,
         public ?int $eventTime,
-        public array $properties,
+        public object $properties, // no Map type in php. Array is serialized by json_encode with square braces. Use object to receive serializing the properties in curly braces
         public array|object|null $payload
     ) {
     }
@@ -21,10 +21,12 @@ class Message
             $key,
             'publish',
             null,
-            [],
+            (object) [],
             $payload
         );
     }
+
+    // TODO add builder methods for setting eventTime and properties, along with unit tests
 
     public static function newUnpublishMessage(string $key): Message
     {
@@ -32,7 +34,7 @@ class Message
             $key,
             'unpublish',
             null,
-            [],
+            (object) [],
             null
         );
     }

@@ -2,6 +2,7 @@
 
 namespace Streamx\Clients\Ingestion\Tests\Unit\Impl;
 
+use donatj\MockWebServer\ResponseStack;
 use PHPUnit\Framework\Attributes\Test;
 use Streamx\Clients\Ingestion\Builders\StreamxClientBuilders;
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
@@ -20,15 +21,15 @@ class RestStreamxClientTest extends MockServerTestCase
         $data = new NestedData(new Data('Data name', 'Data description'),
             '<div style="margin:20px;">Data property</div>{"key":"value"}');
 
-        self::$server->setResponseOfPath('/ingestion/v1/channels/channel/messages',
+        self::$server->setResponseOfPath('/ingestion/v1/channels/pages/messages',
             StreamxResponse::success(123456, $key));
 
         // When
-        $result = $this->client->newPublisher("channel")->publish($key, $data);
+        $result = $this->createPagesPublisher()->publish($key, $data);
 
         // Then
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
-            '/ingestion/v1/channels/channel/messages',
+            '/ingestion/v1/channels/pages/messages',
             $key,
             '{"data":{"name":"Data name","description":"Data description"},' .
             '"property":"<div style=\"margin:20px;\">Data property<\/div>{\"key\":\"value\"}"}');
@@ -44,15 +45,15 @@ class RestStreamxClientTest extends MockServerTestCase
         $key = "data-as-array";
         $data = ['content' => ['bytes' => 'Text']];
 
-        self::$server->setResponseOfPath('/ingestion/v1/channels/channel/messages',
+        self::$server->setResponseOfPath('/ingestion/v1/channels/pages/messages',
             StreamxResponse::success(100232, $key));
 
         // When
-        $result = $this->client->newPublisher("channel")->publish($key, $data);
+        $result = $this->createPagesPublisher()->publish($key, $data);
 
         // Then
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
-            '/ingestion/v1/channels/channel/messages',
+            '/ingestion/v1/channels/pages/messages',
             $key,
             '{"content":{"bytes":"Text"}}');
 
@@ -65,15 +66,15 @@ class RestStreamxClientTest extends MockServerTestCase
     {
         // Given
         $key = "key-to-unpublish";
-        self::$server->setResponseOfPath('/ingestion/v1/channels/channel/messages',
+        self::$server->setResponseOfPath('/ingestion/v1/channels/pages/messages',
             StreamxResponse::success(100205, $key));
 
         // When
-        $result = $this->client->newPublisher("channel")->unpublish($key);
+        $result = $this->createPagesPublisher()->unpublish($key);
 
         // Then
         $this->assertUnpublishPostRequest(self::$server->getLastRequest(),
-            '/ingestion/v1/channels/channel/messages',
+            '/ingestion/v1/channels/pages/messages',
             $key
         );
 
@@ -89,29 +90,28 @@ class RestStreamxClientTest extends MockServerTestCase
         $unpublishKey = "unpublish-with-token";
         $data = new Data('Test name');
 
-        self::$server->setResponseOfPath('/ingestion/v1/channels/channel-for-publishing/messages',
-            StreamxResponse::success(100211, $publishKey));
-
-        self::$server->setResponseOfPath('/ingestion/v1/channels/channel-for-unpublishing/messages',
-            StreamxResponse::success(100212, $unpublishKey));
+        self::$server->setResponseOfPath('/ingestion/v1/channels/pages/messages',
+            new ResponseStack(
+                StreamxResponse::success(100211, $publishKey),
+                StreamxResponse::success(100212, $unpublishKey)));
 
         $this->client = StreamxClientBuilders::create(self::$server->getServerRoot())
             ->setAuthToken('abc-100')
             ->build();
 
         // When
-        $this->client->newPublisher("channel-for-publishing")->publish($publishKey, $data);
-        $this->client->newPublisher("channel-for-unpublishing")->unpublish($unpublishKey);
+        $this->createPagesPublisher()->publish($publishKey, $data);
+        $this->createPagesPublisher()->unpublish($unpublishKey);
 
         // Then
         $this->assertPublishPostRequest(self::$server->getRequestByOffset($this::LAST_REQUEST_OFFSET - 1),
-            '/ingestion/v1/channels/channel-for-publishing/messages',
+            '/ingestion/v1/channels/pages/messages',
             $publishKey,
             '{"name":"Test name","description":null}',
             ['Authorization' => 'Bearer abc-100']);
 
         $this->assertUnpublishPostRequest(self::$server->getLastRequest(),
-            '/ingestion/v1/channels/channel-for-unpublishing/messages',
+            '/ingestion/v1/channels/pages/messages',
             $unpublishKey,
             ['Authorization' => 'Bearer abc-100']);
     }
@@ -123,15 +123,15 @@ class RestStreamxClientTest extends MockServerTestCase
         $key = "utf8";
         $data = ['message' => '¡Hola, 🌍!'];
 
-        self::$server->setResponseOfPath('/ingestion/v1/channels/channel/messages',
+        self::$server->setResponseOfPath('/ingestion/v1/channels/pages/messages',
             StreamxResponse::success(100298, $key));
 
         // When
-        $result = $this->client->newPublisher("channel")->publish($key, $data);
+        $result = $this->createPagesPublisher()->publish($key, $data);
 
         // Then
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
-            '/ingestion/v1/channels/channel/messages',
+            '/ingestion/v1/channels/pages/messages',
             $key,
             '{"message":"\u00a1Hola, \ud83c\udf0d!"}');
 
@@ -150,7 +150,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->expectExceptionMessage('JSON encoding error: Malformed UTF-8 characters, possibly incorrectly encoded');
 
         // When
-        $this->client->newPublisher("channel")->publish("latin-1", $data);
+        $this->createPagesPublisher()->publish("latin-1", $data);
     }
 
     #[Test]
@@ -168,7 +168,7 @@ class RestStreamxClientTest extends MockServerTestCase
             'Code: UNSUPPORTED_TYPE. Message: Unsupported type: not-supported');
 
         // When
-        $this->client->newPublisher("not-supported")->publish("key", $data);
+        $this->createPublisherWithIrrelevantSchema("not-supported")->publish("key", $data);
     }
 
     #[Test]
@@ -184,7 +184,7 @@ class RestStreamxClientTest extends MockServerTestCase
             'Code: UNSUPPORTED_TYPE. Message: Unsupported type: not-supported');
 
         // When
-        $this->client->newPublisher("not-supported")->unpublish("key");
+        $this->createPublisherWithIrrelevantSchema("not-supported")->unpublish("key");
     }
 
     #[Test]
@@ -202,7 +202,7 @@ class RestStreamxClientTest extends MockServerTestCase
             'Code: SERVER_ERROR. Message: Unexpected server error');
 
         // When
-        $this->client->newPublisher("errors")->publish("500", $data);
+        $this->createPublisherWithIrrelevantSchema("errors")->publish("500", $data);
     }
 
     #[Test]
@@ -220,7 +220,7 @@ class RestStreamxClientTest extends MockServerTestCase
             'Response could not be parsed.');
 
         // When
-        $this->client->newPublisher("errors")->publish("500", $data);
+        $this->createPublisherWithIrrelevantSchema("errors")->publish("500", $data);
     }
 
     #[Test]
@@ -238,7 +238,7 @@ class RestStreamxClientTest extends MockServerTestCase
             'Property [errorCode] is required');
 
         // When
-        $this->client->newPublisher("errors")->publish("500", $data);
+        $this->createPublisherWithIrrelevantSchema("errors")->publish("500", $data);
     }
 
     #[Test]
@@ -255,7 +255,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->expectExceptionMessage('Communication error. Response status: 408. Message: Request Timeout');
 
         // When
-        $this->client->newPublisher("errors")->publish("408", $data);
+        $this->createPublisherWithIrrelevantSchema("errors")->publish("408", $data);
     }
 
     #[Test]
@@ -272,7 +272,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->expectExceptionMessage('Authentication failed. Make sure that the given token is valid.');
 
         // When
-        $this->client->newPublisher("errors")->publish("401", $data);
+        $this->createPublisherWithIrrelevantSchema("errors")->publish("401", $data);
     }
 
     #[Test]
@@ -289,7 +289,7 @@ class RestStreamxClientTest extends MockServerTestCase
             'https://non-existing/ingestion/v1/channels/errors/messages failed due to HTTP client error');
 
         // When
-        $this->client->newPublisher("errors")->publish("non-existing-host", $data);
+        $this->createPublisherWithIrrelevantSchema("errors")->publish("non-existing-host", $data);
     }
 
     #[Test]
@@ -304,7 +304,7 @@ class RestStreamxClientTest extends MockServerTestCase
             'https://non-existing/ingestion/v1/channels/errors/messages failed due to HTTP client error');
 
         // When
-        $this->client->newPublisher("errors")->unpublish("non-existing-host");
+        $this->createPublisherWithIrrelevantSchema("errors")->unpublish("non-existing-host");
     }
 
     #[Test]

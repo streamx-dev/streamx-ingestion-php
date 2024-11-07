@@ -21,7 +21,7 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
         $key = 'key';
         $data = ['message' => 'test'];
 
-        self::$server->setResponseOfPath('/custom-ingestion/v2/channels/channel/messages',
+        self::$server->setResponseOfPath('/custom-ingestion/v2/channels/pages/messages',
             StreamxResponse::success(836383, $key));
 
         $this->client = StreamxClientBuilders::create(self::$server->getServerRoot())
@@ -29,11 +29,11 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
             ->build();
 
         // When
-        $result = $this->client->newPublisher("channel")->publish($key, $data);
+        $result = $this->createPagesPublisher()->publish($key, $data);
 
         // Then
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
-            '/custom-ingestion/v2/channels/channel/messages',
+            '/custom-ingestion/v2/channels/pages/messages',
             $key,
             '{"message":"test"}');
 
@@ -48,7 +48,7 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
         $key = 'key';
         $data = ['message' => 'custom requester'];
 
-        self::$server->setResponseOfPath('/custom-requester-ingestion/v1/channels/channel/messages',
+        self::$server->setResponseOfPath('/custom-requester-ingestion/v1/channels/pages/messages',
             StreamxResponse::success(937493, $key));
 
         $this->client = StreamxClientBuilders::create(self::$server->getServerRoot())
@@ -56,11 +56,11 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
             ->build();
 
         // When
-        $result = $this->client->newPublisher("channel")->publish("key", $data);
+        $result = $this->createPagesPublisher()->publish("key", $data);
 
         // Then
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
-            '/custom-requester-ingestion/v1/channels/channel/messages',
+            '/custom-requester-ingestion/v1/channels/pages/messages',
             $key,
             '{"message":"custom requester"}');
 
@@ -75,7 +75,7 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
         $key = 'key';
         $data = ['message' => 'custom http client'];
 
-        self::$server->setResponseOfPath('/ingestion/v1/channels/channel/messages',
+        self::$server->setResponseOfPath('/ingestion/v1/channels/pages/messages',
             StreamxResponse::success(937493, $key));
 
         $symphonyClient = (new Psr18Client())->withOptions(['headers' => ['X-StreamX' => 'Custom http client']]);
@@ -85,11 +85,11 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
             ->build();
 
         // When
-        $result = $this->client->newPublisher("channel")->publish("key", $data);
+        $result = $this->createPagesPublisher()->publish("key", $data);
 
         // Then
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
-            '/ingestion/v1/channels/channel/messages',
+            '/ingestion/v1/channels/pages/messages',
             'key',
             '{"message":"custom http client"}',
             ['X-StreamX' => 'Custom http client']);
@@ -105,7 +105,7 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
         $key = 'key';
         $data = ['property' => 'original'];
 
-        self::$server->setResponseOfPath('/ingestion/v1/channels/channel/messages',
+        self::$server->setResponseOfPath('/ingestion/v1/channels/pages/messages',
             StreamxResponse::success(625436, $key));
 
         $this->client = StreamxClientBuilders::create(self::$server->getServerRoot())
@@ -113,11 +113,11 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
             ->build();
 
         // When
-        $result = $this->client->newPublisher("channel")->publish("key", $data);
+        $result = $this->createPagesPublisher()->publish("key", $data);
 
         // Then
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
-            '/ingestion/v1/channels/channel/messages',
+            '/ingestion/v1/channels/pages/messages',
             'key',
             '{"property":"original","customProperty":"Added by custom Json Provider"}');
 

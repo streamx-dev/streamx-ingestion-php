@@ -26,4 +26,6 @@ interface Publisher
      * @throws StreamxClientException if command failed.
      */
     public function unpublish(string $key): SuccessResult;
+
+     // TODO offer the same API methods in this inteface, as in java ingestion client
 }

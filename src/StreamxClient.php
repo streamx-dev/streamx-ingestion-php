@@ -17,7 +17,8 @@ interface StreamxClient
     /**
      * Creates new {@link Publisher} instance.
      * @param string $channel Ingestion channel name.
+     * @param string $channelSchemaJson Ingestion channel schema.
      * @return Publisher
      */
-    public function newPublisher(string $channel): Publisher;
+    public function newPublisher(string $channel, string $channelSchemaJson): Publisher;
 }
