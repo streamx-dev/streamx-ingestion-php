@@ -46,14 +46,23 @@ class MockServerTestCase extends TestCase
         return $this->client->newPublisher($channel, self::$dummySchemaJson);
     }
 
+    protected function defaultPublishMessageJson($key, $payload): string
+    {
+        return '{"key":"'.$key.'","action":"publish","eventTime":null,"properties":{},"payload":{"dev.streamx.data.model.Page":'.$payload.'}}';
+    }
+
+    protected function defaultUnpublishMessageJson($key): string
+    {
+        return '{"key":"'.$key.'","action":"unpublish","eventTime":null,"properties":{},"payload":null}';
+    }
+
     protected function assertPublishPostRequest(
         RequestInfo $request,
         string $uri,
         string $key,
-        string $payload,
+        string $expectedBody,
         array $headers = null
     ): void {
-        $expectedBody = '{"key":"'.$key.'","action":"publish","eventTime":null,"properties":{},"payload":{"dev.streamx.data.model.Page":'.$payload.'}}';
         $this->assertIngestionPostRequest($request, $uri, $expectedBody, $headers);
         $this->assertEquals('application/json; charset=UTF-8', $request->getHeaders()['Content-Type']);
     }
@@ -62,9 +71,9 @@ class MockServerTestCase extends TestCase
         RequestInfo $request,
         string $uri,
         string $key,
+        string $expectedBody,
         array $headers = null
     ): void {
-        $expectedBody = '{"key":"'.$key.'","action":"unpublish","eventTime":null,"properties":{},"payload":null}';
         $this->assertIngestionPostRequest($request, $uri, $expectedBody, $headers);
         $this->assertArrayNotHasKey('Content-Type', $request->getHeaders());
     }

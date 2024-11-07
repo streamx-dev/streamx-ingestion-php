@@ -6,6 +6,8 @@ use donatj\MockWebServer\ResponseStack;
 use PHPUnit\Framework\Attributes\Test;
 use Streamx\Clients\Ingestion\Builders\StreamxClientBuilders;
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
+use Streamx\Clients\Ingestion\Impl\Message;
+use Streamx\Clients\Ingestion\Impl\MessageBuilder;
 use Streamx\Clients\Ingestion\Tests\Testing\MockServerTestCase;
 use Streamx\Clients\Ingestion\Tests\Testing\StreamxResponse;
 
@@ -31,8 +33,9 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             $key,
-            '{"data":{"name":"Data name","description":"Data description"},' .
-            '"property":"<div style=\"margin:20px;\">Data property<\/div>{\"key\":\"value\"}"}');
+            $this->defaultPublishMessageJson($key,
+                '{"data":{"name":"Data name","description":"Data description"},' .
+                '"property":"<div style=\"margin:20px;\">Data property<\/div>{\"key\":\"value\"}"}'));
 
         $this->assertEquals(123456, $result->getEventTime());
         $this->assertEquals($key, $result->getKey());
@@ -55,9 +58,58 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             $key,
-            '{"content":{"bytes":"Text"}}');
+            $this->defaultPublishMessageJson($key, '{"content":{"bytes":"Text"}}'));
 
         $this->assertEquals(100232, $result->getEventTime());
+        $this->assertEquals($key, $result->getKey());
+    }
+
+    #[Test]
+    public function shouldPublishDataAsMessage()
+    {
+        // Given
+        $key = "key-to-publish";
+        $data = new NestedData(new Data('Data name', 'Data content'), 'Nested data content');
+        $message = (Message::newPublishMessage($key, $data))
+            ->withProperty('key-1', 'value-1')
+            ->withEventTime(951)
+            ->withProperties(['key-2' => 'value-2', 'key-3' => 'value-3']) // expecting this call to not overwrite previously set properties
+            ->withProperty('key-4', 'value-4')
+            ->build();
+
+        self::$server->setResponseOfPath('/ingestion/v1/channels/pages/messages',
+            StreamxResponse::success(123456, $key));
+
+        // When
+        $result = $this->createPagesPublisher()->send($message);
+
+        // Then
+        $this->assertPublishPostRequest(self::$server->getLastRequest(),
+            '/ingestion/v1/channels/pages/messages',
+            $key,
+            '{'.
+                '"key":"key-to-publish",'.
+                '"action":"publish",'.
+                '"eventTime":951,'.
+                '"properties":{'.
+                    '"key-1":"value-1",'.
+                    '"key-2":"value-2",'.
+                    '"key-3":"value-3",'.
+                    '"key-4":"value-4"'.
+                '},'.
+                '"payload":{'.
+                    '"dev.streamx.data.model.Page":{'.
+                        '"data":{"'.
+                            'name":"Data name",'.
+                            '"description":"Data content"'.
+                        '},'.
+                        '"property":"Nested data content"'.
+                    '}'.
+                '}'.
+            '}'
+        );
+
+        $this->assertEquals(123456, $result->getEventTime());
         $this->assertEquals($key, $result->getKey());
     }
 
@@ -75,7 +127,8 @@ class RestStreamxClientTest extends MockServerTestCase
         // Then
         $this->assertUnpublishPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
-            $key
+            $key,
+            $this->defaultUnpublishMessageJson($key),
         );
 
         $this->assertEquals(100205, $result->getEventTime());
@@ -107,12 +160,13 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->assertPublishPostRequest(self::$server->getRequestByOffset($this::LAST_REQUEST_OFFSET - 1),
             '/ingestion/v1/channels/pages/messages',
             $publishKey,
-            '{"name":"Test name","description":null}',
+            $this->defaultPublishMessageJson($publishKey, '{"name":"Test name","description":null}'),
             ['Authorization' => 'Bearer abc-100']);
 
         $this->assertUnpublishPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             $unpublishKey,
+            $this->defaultUnpublishMessageJson($unpublishKey),
             ['Authorization' => 'Bearer abc-100']);
     }
 
@@ -133,7 +187,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             $key,
-            '{"message":"\u00a1Hola, \ud83c\udf0d!"}');
+            $this->defaultPublishMessageJson($key, '{"message":"\u00a1Hola, \ud83c\udf0d!"}'));
 
         $this->assertEquals(100298, $result->getEventTime());
         $this->assertEquals($key, $result->getKey());

@@ -2,6 +2,7 @@
 
 namespace Streamx\Clients\Ingestion\Tests\Testing\Model;
 
-class Page {
+class Page
+{
     public function __construct(public Content $content) { }
 }

@@ -2,6 +2,7 @@
 
 namespace Streamx\Clients\Ingestion\Tests\Testing\Model;
 
-class Content {
+class Content
+{
     public function __construct(public string $bytes) { }
 }

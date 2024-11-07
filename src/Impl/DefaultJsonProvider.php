@@ -14,7 +14,7 @@ class DefaultJsonProvider implements JsonProvider
     {
         $avroSchema = AvroSchema::parse($schema);
 
-        if ($message->action == 'publish') {
+        if ($message->action == Message::PUBLISH_ACTION) {
             $this->wrapPayloadWithTypeName($message, $avroSchema);
         }
 

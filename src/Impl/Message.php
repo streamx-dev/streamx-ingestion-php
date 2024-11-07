@@ -4,6 +4,8 @@ namespace Streamx\Clients\Ingestion\Impl;
 
 class Message
 {
+    public const PUBLISH_ACTION = "publish";
+    public const UNPUBLISH_ACTION = "unpublish";
 
     public function __construct(
         // json_encode function requires properties to be public
@@ -15,27 +17,67 @@ class Message
     ) {
     }
 
-    public static function newPublishMessage(string $key, array|object $payload): Message
+    public static function newPublishMessage(string $key, array|object $payload): MessageBuilder
     {
-        return new Message(
-            $key,
-            'publish',
-            null,
-            (object) [],
-            $payload
-        );
+        return (new MessageBuilder($key, self::PUBLISH_ACTION))
+            ->withPayload($payload);
     }
 
-    // TODO add builder methods for setting eventTime and properties, along with unit tests
+    public static function newUnpublishMessage(string $key): MessageBuilder
+    {
+        return new MessageBuilder($key, self::UNPUBLISH_ACTION);
+    }
+}
 
-    public static function newUnpublishMessage(string $key): Message
+class MessageBuilder
+{
+    public string $key;
+    public string $action;
+    public ?int $eventTime;
+    public object $properties;
+    public array|object|null $payload;
+
+    public function __construct(string $key, string $action)
+    {
+        $this->key = $key;
+        $this->action = $action;
+        $this->eventTime = null;
+        $this->properties = (object) [];
+        $this->payload = null;
+    }
+
+    public function withEventTime(int $eventTime): self
+    {
+        $this->eventTime = $eventTime;
+        return $this;
+    }
+
+    public function withProperties(array $properties): self
+    {
+        $mergedProperties = array_merge((array) $this->properties, $properties);
+        $this->properties = (object) $mergedProperties;
+        return $this;
+    }
+
+    public function withProperty(string $key, string $value): self
+    {
+        return $this->withProperties([$key => $value]);
+    }
+
+    public function withPayload(array|object $payload): self
+    {
+        $this->payload = $payload;
+        return $this;
+    }
+
+    public function build(): Message
     {
         return new Message(
-            $key,
-            'unpublish',
-            null,
-            (object) [],
-            null
+            $this->key,
+            $this->action,
+            $this->eventTime,
+            $this->properties,
+            $this->payload
         );
     }
 }

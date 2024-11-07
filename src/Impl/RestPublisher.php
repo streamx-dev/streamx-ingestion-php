@@ -30,21 +30,24 @@ class RestPublisher implements Publisher
 
     public function publish(string $key, object|array $payload): SuccessResult
     {
-        $message = Message::newPublishMessage($key, $payload);
-        $actualHeaders = array_merge($this->headers, ['Content-Type' => 'application/json; charset=UTF-8']);
-        return $this->ingest($message, $actualHeaders);
+        $message = (Message::newPublishMessage($key, $payload))->build();
+        return $this->send($message);
     }
 
     public function unpublish(string $key): SuccessResult
     {
-        $message = Message::newUnpublishMessage($key);
-        return $this->ingest($message, $this->headers);
+        $message = (Message::newUnpublishMessage($key))->build();
+        return $this->send($message);
     }
 
-    private function ingest(Message $message, $headers): SuccessResult
+    public function send(Message $message): SuccessResult
     {
         $json = $this->jsonProvider->getJson($message, $this->channelSchemaJson);
-        return $this->httpRequester->executePost($this->messageIngestionEndpointUri, $headers, $json);
+        $actualHeaders = $message->action == Message::PUBLISH_ACTION
+            ? array_merge($this->headers, ['Content-Type' => 'application/json; charset=UTF-8'])
+            : $this->headers;
+
+        return $this->httpRequester->executePost($this->messageIngestionEndpointUri, $actualHeaders, $json);
     }
 
     private function buildHttpHeaders(?string $authToken): array
