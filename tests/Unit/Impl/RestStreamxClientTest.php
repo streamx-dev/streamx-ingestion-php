@@ -136,6 +136,46 @@ class RestStreamxClientTest extends MockServerTestCase
     }
 
     #[Test]
+    public function shouldUnpublishDataAsMessage()
+    {
+        // Given
+        $key = "key-to-unpublish";
+        $message = (Message::newUnpublishMessage($key))
+            ->withProperty('key-1', 'value-1')
+            ->withEventTime(951)
+            ->withProperties(['key-2' => 'value-2', 'key-3' => 'value-3']) // expecting this call to not overwrite previously set properties
+            ->withProperty('key-4', 'value-4')
+            ->build();
+
+            self::$server->setResponseOfPath('/ingestion/v1/channels/pages/messages',
+            StreamxResponse::success(100205, $key));
+
+        // When
+        $result = $this->createPagesPublisher()->send($message);
+
+        // Then
+        $this->assertUnpublishPostRequest(self::$server->getLastRequest(),
+            '/ingestion/v1/channels/pages/messages',
+            $key,
+            '{'.
+                '"key":"key-to-unpublish",'.
+                '"action":"unpublish",'.
+                '"eventTime":951,'.
+                '"properties":{'.
+                    '"key-1":"value-1",'.
+                    '"key-2":"value-2",'.
+                    '"key-3":"value-3",'.
+                    '"key-4":"value-4"'.
+                '},'.
+                '"payload":null'.
+            '}'
+        );
+
+        $this->assertEquals(100205, $result->getEventTime());
+        $this->assertEquals($key, $result->getKey());
+    }
+
+    #[Test]
     public function shouldMakeIngestionsWithAuthorizationToken()
     {
         // Given
