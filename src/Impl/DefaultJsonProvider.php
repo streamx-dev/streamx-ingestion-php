@@ -13,7 +13,6 @@ class DefaultJsonProvider implements JsonProvider
     public function getJson(Message $message, string $schema): string
     {
         $avroSchema = AvroSchema::parse($schema);
-        $arrSchema = json_decode($schema);
 
         if ($message->action == 'publish') {
             $this->wrapPayloadWithTypeName($message, $avroSchema);
