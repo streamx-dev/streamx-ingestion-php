@@ -54,3 +54,23 @@ The recommended way to install the client is through
 ```bash
 composer require streamx/ingestion-client
 ```
+
+# Run tests with coverage
+
+1. Install xdebug:
+```bash
+pecl install xdebug
+```
+
+2. Uncomment `coverage` section in `phpunit.xml`
+
+3. Configure xdebug mode:
+```bash
+export XDEBUG_MODE=coverage
+```
+
+4. Run tests with coverage and open results in web browser:
+```bash
+./vendor/bin/phpunit --coverage-text --coverage-html target/coverage-report
+open target/coverage-report/index.html
+```
