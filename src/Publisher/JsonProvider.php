@@ -3,7 +3,6 @@
 namespace Streamx\Clients\Ingestion\Publisher;
 
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
-use Streamx\Clients\Ingestion\Impl\Message;
 
 /**
  * An interface that allows to inject custom JSON Provider.

@@ -5,9 +5,14 @@ namespace Streamx\Clients\Ingestion\Tests\Unit\Impl;
 use donatj\MockWebServer\ResponseStack;
 use PHPUnit\Framework\Attributes\Test;
 use Streamx\Clients\Ingestion\Builders\StreamxClientBuilders;
+use Streamx\Clients\Ingestion\Exceptions\ForbiddenChannelException;
+use Streamx\Clients\Ingestion\Exceptions\IngestionInputInvalidException;
+use Streamx\Clients\Ingestion\Exceptions\SendingEventErrorException;
+use Streamx\Clients\Ingestion\Exceptions\ServerErrorException;
+use Streamx\Clients\Ingestion\Exceptions\ServiceFailureException;
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
-use Streamx\Clients\Ingestion\Impl\Message;
-use Streamx\Clients\Ingestion\Impl\MessageBuilder;
+use Streamx\Clients\Ingestion\Exceptions\UnsupportedChannelException;
+use Streamx\Clients\Ingestion\Publisher\Message;
 use Streamx\Clients\Ingestion\Tests\Testing\MockServerTestCase;
 use Streamx\Clients\Ingestion\Tests\Testing\StreamxResponse;
 
@@ -37,8 +42,7 @@ class RestStreamxClientTest extends MockServerTestCase
                 '{"data":{"name":"Data name","description":"Data description"},' .
                 '"property":"<div style=\"margin:20px;\">Data property<\/div>{\"key\":\"value\"}"}'));
 
-        $this->assertEquals(123456, $result->getEventTime());
-        $this->assertEquals($key, $result->getKey());
+        $this->assertSuccessResult($result, 123456, $key);
     }
 
     #[Test]
@@ -60,8 +64,7 @@ class RestStreamxClientTest extends MockServerTestCase
             $key,
             $this->defaultPublishMessageJson($key, '{"content":{"bytes":"Text"}}'));
 
-        $this->assertEquals(100232, $result->getEventTime());
-        $this->assertEquals($key, $result->getKey());
+        $this->assertSuccessResult($result, 100232, $key);
     }
 
     #[Test]
@@ -109,8 +112,7 @@ class RestStreamxClientTest extends MockServerTestCase
             '}'
         );
 
-        $this->assertEquals(123456, $result->getEventTime());
-        $this->assertEquals($key, $result->getKey());
+        $this->assertSuccessResult($result, 123456, $key);
     }
 
     #[Test]
@@ -131,8 +133,7 @@ class RestStreamxClientTest extends MockServerTestCase
             $this->defaultUnpublishMessageJson($key),
         );
 
-        $this->assertEquals(100205, $result->getEventTime());
-        $this->assertEquals($key, $result->getKey());
+        $this->assertSuccessResult($result, 100205, $key);
     }
 
     #[Test]
@@ -171,8 +172,37 @@ class RestStreamxClientTest extends MockServerTestCase
             '}'
         );
 
-        $this->assertEquals(100205, $result->getEventTime());
-        $this->assertEquals($key, $result->getKey());
+        $this->assertSuccessResult($result, 100205, $key);
+    }
+
+    #[Test]
+    public function shouldHandleSuccessResponseWithUnknownProperty()
+    {
+        // Given
+        $key = "key-to-publish";
+        $data = new Data('name', 'content');
+        $message = (Message::newPublishMessage($key, $data))->build();
+
+        self::$server->setResponseOfPath('/ingestion/v1/channels/pages/messages',
+            StreamxResponse::custom(
+                202,
+                '{'.
+                    '"success":{"eventTime":123456,"key":"'.$key.'","unknownPropertyKey":"unknownPropertyValue"},'.
+                    '"failure":null'.
+                '}'
+            )
+        );
+
+        // When
+        $result = $this->createPagesPublisher()->send($message);
+
+        // Then
+        $this->assertPublishPostRequest(self::$server->getLastRequest(),
+            '/ingestion/v1/channels/pages/messages',
+            $key,
+            $this->defaultPublishMessageJson($key, '{"name":"name","description":"content"}'));
+
+        $this->assertSuccessResult($result, 123456, $key);
     }
 
     #[Test]
@@ -229,8 +259,7 @@ class RestStreamxClientTest extends MockServerTestCase
             $key,
             $this->defaultPublishMessageJson($key, '{"message":"\u00a1Hola, \ud83c\udf0d!"}'));
 
-        $this->assertEquals(100298, $result->getEventTime());
-        $this->assertEquals($key, $result->getKey());
+        $this->assertSuccessResult($result, 100298, $key);
     }
 
     #[Test]
@@ -248,41 +277,117 @@ class RestStreamxClientTest extends MockServerTestCase
     }
 
     #[Test]
-    public function shouldThrowExceptionWhenNotSupportedChannel()
+    public function shouldThrowExceptionWhenMessagePropertyNotInUtf8Encoding()
     {
         // Given
-        $data = new Data('Test name');
-
-        self::$server->setResponseOfPath('/ingestion/v1/channels/not-supported/messages',
-            StreamxResponse::failure(400, 'UNSUPPORTED_TYPE', 'Unsupported type: not-supported'));
+        $key = 'latin-1';
+        $data = new Data('some data');
+        $message = (Message::newPublishMessage($key, $data))
+            ->withProperty('property-name', mb_convert_encoding('¡Hola, 🌍!', 'ISO-8859-1', 'UTF-8'))
+            ->build();
 
         // Expect exception
         $this->expectException(StreamxClientException::class);
-        $this->expectExceptionMessage('Ingestion REST endpoint known error. ' .
-            'Code: UNSUPPORTED_TYPE. Message: Unsupported type: not-supported');
+        $this->expectExceptionMessage('JSON encoding error: Malformed UTF-8 characters, possibly incorrectly encoded');
 
         // When
-        $this->createPublisherWithIrrelevantSchema("not-supported")->publish("key", $data);
+        $this->createPagesPublisher()->send($message);
+    }
+
+    #[Test]
+    public function shouldThrowExceptionWhenInvalidIngestionInput()
+    {
+        // Given
+        $channel = "pages";
+        $data = new Data('Test name');
+
+        self::$server->setResponseOfPath("/ingestion/v1/channels/$channel/messages",
+            StreamxResponse::failure(400, 'INVALID_INGESTION_INPUT', 'Invalid data.'));
+
+        // Expect exception
+        $this->expectException(IngestionInputInvalidException::class);
+        $this->expectExceptionMessage('Ingestion REST endpoint known error. ' .
+            'Code: INVALID_INGESTION_INPUT. Message: Invalid data.');
+
+        // When
+        $this->createPublisherWithIrrelevantSchema($channel)->publish("key", $data);
+    }
+
+    #[Test]
+    public function shouldThrowExceptionWhenForbiddenChannel()
+    {
+        // Given
+        $channel = "administration";
+        $data = new Data('Test name');
+
+        self::$server->setResponseOfPath("/ingestion/v1/channels/$channel/messages",
+            StreamxResponse::failure(403, 'FORBIDDEN_CHANNEL', "Forbidden channel: $channel"));
+
+        // Expect exception
+        $this->expectException(ForbiddenChannelException::class);
+        $this->expectExceptionMessage('Ingestion REST endpoint known error. ' .
+            "Code: FORBIDDEN_CHANNEL. Message: Forbidden channel: $channel");
+
+        // When
+        $this->createPublisherWithIrrelevantSchema($channel)->publish("key", $data);
+    }
+
+    #[Test]
+    public function shouldThrowExceptionWhenNotSupportedChannel()
+    {
+        // Given
+        $channel = "assets";
+        $data = new Data('Test name');
+
+        self::$server->setResponseOfPath("/ingestion/v1/channels/$channel/messages",
+            StreamxResponse::failure(400, 'UNSUPPORTED_CHANNEL', "Unsupported channel: $channel"));
+
+        // Expect exception
+        $this->expectException(UnsupportedChannelException::class);
+        $this->expectExceptionMessage('Ingestion REST endpoint known error. ' .
+            "Code: UNSUPPORTED_CHANNEL. Message: Unsupported channel: $channel");
+
+        // When
+        $this->createPublisherWithIrrelevantSchema($channel)->publish("key", $data);
     }
 
     #[Test]
     public function shouldThrowExceptionWhenNotSupportedChannelWhileUnpublishing()
     {
         // Given
-        self::$server->setResponseOfPath('/ingestion/v1/channels/not-supported/channel',
-            StreamxResponse::failure(400, 'UNSUPPORTED_TYPE', 'Unsupported type: not-supported'));
+        $channel = "assets";
+        self::$server->setResponseOfPath("/ingestion/v1/channels/$channel/messages",
+            StreamxResponse::failure(400, 'UNSUPPORTED_CHANNEL', "Unsupported channel: $channel"));
 
         // Expect exception
-        $this->expectException(StreamxClientException::class);
+        $this->expectException(UnsupportedChannelException::class);
         $this->expectExceptionMessage('Ingestion REST endpoint known error. ' .
-            'Code: UNSUPPORTED_TYPE. Message: Unsupported type: not-supported');
+            "Code: UNSUPPORTED_CHANNEL. Message: Unsupported channel: $channel");
 
         // When
-        $this->createPublisherWithIrrelevantSchema("not-supported")->unpublish("key");
+        $this->createPublisherWithIrrelevantSchema($channel)->unpublish("key");
     }
 
     #[Test]
-    public function shouldThrowExceptionWhenServerError()
+    public function shouldThrowExceptionWhenSendingEventError()
+    {
+        // Given
+        $data = new Data('Test name');
+
+        self::$server->setResponseOfPath('/ingestion/v1/channels/errors/messages',
+            StreamxResponse::failure(500, 'SENDING_EVENT_ERROR', 'Error sending event'));
+
+        // Expect exception
+        $this->expectException(SendingEventErrorException::class);
+        $this->expectExceptionMessage('Ingestion REST endpoint known error. ' .
+            'Code: SENDING_EVENT_ERROR. Message: Error sending event');
+
+        // When
+        $this->createPublisherWithIrrelevantSchema("errors")->publish("500", $data);
+    }
+
+    #[Test]
+    public function shouldThrowExceptionWhenUnexpectedServerError()
     {
         // Given
         $data = new Data('Test name');
@@ -291,12 +396,48 @@ class RestStreamxClientTest extends MockServerTestCase
             StreamxResponse::failure(500, 'SERVER_ERROR', 'Unexpected server error'));
 
         // Expect exception
-        $this->expectException(StreamxClientException::class);
+        $this->expectException(ServerErrorException::class);
         $this->expectExceptionMessage('Ingestion REST endpoint known error. ' .
             'Code: SERVER_ERROR. Message: Unexpected server error');
 
         // When
-        $this->createPublisherWithIrrelevantSchema("errors")->publish("500", $data);
+        $this->createPublisherWithIrrelevantSchema("errors")->publish("key", $data);
+    }
+
+    #[Test]
+    public function shouldThrowServiceFailureExceptionWhenUnknownServersideErrorCode()
+    {
+        // Given
+        $data = new Data('Test name');
+
+        self::$server->setResponseOfPath('/ingestion/v1/channels/errors/messages',
+            StreamxResponse::failure(500, 'SOME_ERROR_CODE', 'Something happened'));
+
+        // Expect exception
+        $this->expectException(ServiceFailureException::class);
+        $this->expectExceptionMessage('Ingestion REST endpoint known error. ' .
+            'Code: SOME_ERROR_CODE. Message: Something happened');
+
+        // When
+        $this->createPublisherWithIrrelevantSchema("errors")->publish("key", $data);
+    }
+
+    #[Test]
+    public function shouldThrowServiceFailureExceptionWhenErrorResponseWithSuccessHttpStatus()
+    {
+        // Given
+        $data = new Data('Test name');
+
+        self::$server->setResponseOfPath('/ingestion/v1/channels/errors/messages',
+            StreamxResponse::successResultWithFailure('SOME_ERROR_CODE', 'Something happened'));
+
+        // Expect exception
+        $this->expectException(ServiceFailureException::class);
+        $this->expectExceptionMessage('Ingestion REST endpoint known error. ' .
+            'Code: SOME_ERROR_CODE. Message: Something happened');
+
+        // When
+        $this->createPublisherWithIrrelevantSchema("errors")->publish("key", $data);
     }
 
     #[Test]
@@ -444,6 +585,13 @@ class RestStreamxClientTest extends MockServerTestCase
 
         // When
         $this->client = StreamxClientBuilders::create($serverUrl)->build();
+    }
+
+    private function assertSuccessResult($response, int $expectedEventTime, string $expectedKey): void
+    {
+        $this->assertInstanceOf('Streamx\Clients\Ingestion\Publisher\SuccessResult', $response);
+        $this->assertEquals($expectedEventTime, $response->getEventTime());
+        $this->assertEquals($expectedKey, $response->getKey());
     }
 }
 

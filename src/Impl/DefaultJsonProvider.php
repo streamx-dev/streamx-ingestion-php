@@ -4,8 +4,8 @@ namespace Streamx\Clients\Ingestion\Impl;
 
 use AvroSchema;
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
-use Streamx\Clients\Ingestion\Impl\Message;
 use Streamx\Clients\Ingestion\Publisher\JsonProvider;
+use Streamx\Clients\Ingestion\Publisher\Message;
 
 class DefaultJsonProvider implements JsonProvider
 {
@@ -42,13 +42,7 @@ class DefaultJsonProvider implements JsonProvider
         $avroData = [];
         foreach ($schema->fields() as $field) {
             $fieldName = $field->name();
-            $fieldType = $field->type();
-
-            if ($fieldType->type() === 'record' && isset($object->$fieldName)) {
-                $avroData[$fieldName] = convertObjectToAvroArray($object->$fieldName, $fieldType);
-            } else {
-                $avroData[$fieldName] = $object->$fieldName;
-            }
+            $avroData[$fieldName] = $object->$fieldName;
         }
         return $avroData;
     }

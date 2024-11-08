@@ -4,14 +4,14 @@ namespace Streamx\Clients\Ingestion\Impl;
 
 use Psr\Http\Message\UriInterface;
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
-use Streamx\Clients\Ingestion\Impl\Message;
 use Streamx\Clients\Ingestion\Impl\Utils\HttpUtils;
 use Streamx\Clients\Ingestion\Publisher\HttpRequester;
 use Streamx\Clients\Ingestion\Publisher\JsonProvider;
+use Streamx\Clients\Ingestion\Publisher\Message;
 use Streamx\Clients\Ingestion\Publisher\Publisher;
 use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 
-class RestPublisher implements Publisher
+class RestPublisher extends Publisher
 {
     private array $headers;
     private UriInterface $messageIngestionEndpointUri;
@@ -26,18 +26,6 @@ class RestPublisher implements Publisher
     ) {
         $this->headers = $this->buildHttpHeaders($authToken);
         $this->messageIngestionEndpointUri = $this->buildMessageIngestionUri($ingestionEndpointUri, $channel);
-    }
-
-    public function publish(string $key, object|array $payload): SuccessResult
-    {
-        $message = (Message::newPublishMessage($key, $payload))->build();
-        return $this->send($message);
-    }
-
-    public function unpublish(string $key): SuccessResult
-    {
-        $message = (Message::newUnpublishMessage($key))->build();
-        return $this->send($message);
     }
 
     public function send(Message $message): SuccessResult

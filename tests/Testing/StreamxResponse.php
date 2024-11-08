@@ -17,14 +17,19 @@ class StreamxResponse
         return new Response($json, [], 202);
     }
 
-    public static function failure(
-        int $statusCode,
-        string $errorCode,
-        string $errorMessage
-    ): Response {
+    public static function failure(int $statusCode, string $errorCode, string $errorMessage): Response
+    {
         $failureResponse = new FailureResponse($errorCode, $errorMessage);
         $json = json_encode($failureResponse);
         return self::custom($statusCode, $json, ['Content-Type' => 'application/json']);
+    }
+
+    public static function successResultWithFailure(string $errorCode, string $errorMessage): Response
+    {
+        $failureResponse = new FailureResponse($errorCode, $errorMessage);
+        $messageStatus = MessageStatus::ofFailure($failureResponse);
+        $json = json_encode($messageStatus);
+        return new Response($json, [], 202);
     }
 
     public static function custom(int $statusCode, string $body, array $headers = []): Response

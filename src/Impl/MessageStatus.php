@@ -4,7 +4,6 @@ namespace Streamx\Clients\Ingestion\Impl;
 
 use JsonSerializable;
 use stdClass;
-use Streamx\Clients\Ingestion\Impl\FailureResponse;
 use Streamx\Clients\Ingestion\Impl\Utils\DataValidator;
 use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 

@@ -2,8 +2,8 @@
 
 namespace Streamx\Clients\Ingestion\Tests\Testing\Impl;
 
-use Streamx\Clients\Ingestion\Impl\Message;
 use Streamx\Clients\Ingestion\Impl\DefaultJsonProvider;
+use Streamx\Clients\Ingestion\Publisher\Message;
 
 class CustomTestJsonProvider extends DefaultJsonProvider
 {
