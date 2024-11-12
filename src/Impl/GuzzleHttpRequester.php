@@ -17,9 +17,11 @@ use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 class GuzzleHttpRequester implements HttpRequester
 {
 
-    public function __construct(
-        private readonly ClientInterface $httpClient = new GuzzleHttpClient()
-    ) {
+    private /*ClientInterface*/ $httpClient;
+
+    public function __construct(?ClientInterface $httpClient = null)
+    {
+        $this->httpClient = $httpClient ?? new GuzzleHttpClient();
     }
 
     public function executePost(
@@ -73,10 +75,8 @@ class GuzzleHttpRequester implements HttpRequester
      */
     private function parseMessageStatus(ResponseInterface $response): MessageStatus
     {
-        return $this->parseResponse(
-            $response,
-            fn($json) => MessageStatus::fromJson($json)
-        );
+        $jsonObject = $this->parseResponseToJson($response);
+        return MessageStatus::fromJson($jsonObject);
     }
 
     /**
@@ -84,20 +84,9 @@ class GuzzleHttpRequester implements HttpRequester
      */
     private function parseFailureResponse(ResponseInterface $response): FailureResponse
     {
-        return $this->parseResponse(
-            $response,
-            fn($json) => FailureResponse::fromJson($json)
-        );
-    }
-
-    /**
-     * @throws StreamxClientException
-     */
-    private function parseResponse(ResponseInterface $response, callable $jsonToObjectMapper): mixed
-    {
         try {
             $jsonObject = $this->parseResponseToJson($response);
-            return $jsonToObjectMapper($jsonObject);
+            return FailureResponse::fromJson($jsonObject);
         } catch (DataValidationException $e) {
             throw new StreamxClientException(sprintf('Communication error. Response status: %s. Message: %s',
                 $response->getStatusCode(), $e->getMessage()));
@@ -107,7 +96,7 @@ class GuzzleHttpRequester implements HttpRequester
     /**
      * @throws StreamxClientException
      */
-    private function parseResponseToJson(ResponseInterface $response): mixed
+    private function parseResponseToJson(ResponseInterface $response)
     {
         $jsonString = (string)$response->getBody();
         $jsonObject = json_decode($jsonString);
@@ -118,10 +107,11 @@ class GuzzleHttpRequester implements HttpRequester
         return $jsonObject;
     }
 
-    private function streamxClientExceptionFrom(FailureResponse $failureResponse): StreamxClientException{
+    private function streamxClientExceptionFrom(FailureResponse $failureResponse): StreamxClientException
+    {
         return StreamxClientExceptionFactory::create(
             $failureResponse->getErrorCode(),
             $failureResponse->getErrorMessage()
         );
-      }
+    }
 }

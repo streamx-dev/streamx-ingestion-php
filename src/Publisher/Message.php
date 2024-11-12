@@ -7,17 +7,22 @@ class Message
     public const PUBLISH_ACTION = "publish";
     public const UNPUBLISH_ACTION = "unpublish";
 
-    public function __construct(
-        // json_encode function requires properties to be public
-        public string $key,
-        public string $action,
-        public ?int $eventTime,
-        public object $properties, // no Map type in php. Array is serialized by json_encode with square braces. Use object to receive serializing the properties in curly braces
-        public array|object|null $payload
-    ) {
+    public /*string*/ $key;
+    public /*string*/ $action;
+    public /*?int*/ $eventTime;
+    public /*object*/ $properties; // no Map type in php. Array is serialized by json_encode with square braces. Use object to receive serializing the properties in curly braces
+    public /*array|object|null*/ $payload;
+
+    public function __construct(string $key, string $action, ?int $eventTime, object $properties, $payload)
+    {
+        $this->key = $key;
+        $this->action = $action;
+        $this->eventTime = $eventTime;
+        $this->properties = $properties;
+        $this->payload = $payload;
     }
 
-    public static function newPublishMessage(string $key, array|object $payload): MessageBuilder
+    public static function newPublishMessage(string $key, $payload): MessageBuilder
     {
         return (new MessageBuilder($key, self::PUBLISH_ACTION))
             ->withPayload($payload);
@@ -31,11 +36,11 @@ class Message
 
 class MessageBuilder
 {
-    public string $key;
-    public string $action;
-    public ?int $eventTime;
-    public object $properties;
-    public array|object|null $payload;
+    public /*string*/ $key;
+    public /*string*/ $action;
+    public /*?int*/ $eventTime;
+    public /*object*/ $properties;
+    public /*array|object|null*/ $payload;
 
     public function __construct(string $key, string $action)
     {
@@ -64,7 +69,7 @@ class MessageBuilder
         return $this->withProperties([$key => $value]);
     }
 
-    public function withPayload(array|object $payload): self
+    public function withPayload($payload): self
     {
         $this->payload = $payload;
         return $this;

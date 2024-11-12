@@ -17,7 +17,7 @@ abstract class Publisher
      * @return SuccessResult containing ingestion endpoint response entity.
      * @throws StreamxClientException if command failed.
      */
-    public final function publish(string $key, array|object $payload): SuccessResult
+    public final function publish(string $key, $payload): SuccessResult
     {
         $message = (Message::newPublishMessage($key, $payload))->build();
         return $this->send($message);

@@ -12,15 +12,18 @@ use Streamx\Clients\Ingestion\Impl\Utils\DataValidator;
 class SuccessResult implements JsonSerializable
 {
 
+    private /*int*/ $eventTime;
+    private /*string*/ $key;
+
     /**
      * Constructs {@link SuccessResult} instance.
      * @param int $eventTime Timestamp of event triggered by publisher command on StreamX.
      * @param string $key Source key of the ingested message.
      */
-    public function __construct(
-        private readonly int $eventTime,
-        private readonly string $key)
+    public function __construct(int $eventTime, string $key)
     {
+        $this->eventTime = $eventTime;
+        $this->key = $key;     
     }
 
     /**

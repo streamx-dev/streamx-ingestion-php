@@ -7,9 +7,12 @@ use Streamx\Clients\Ingestion\Publisher\Message;
 
 class CustomTestJsonProvider extends DefaultJsonProvider
 {
+    
+    private /*string*/ $customFieldValue;
 
-    public function __construct(private readonly string $customFieldValue)
+    public function __construct(string $customFieldValue)
     {
+        $this->customFieldValue = $customFieldValue;
     }
 
     public function getJson(Message $message, string $schema): string

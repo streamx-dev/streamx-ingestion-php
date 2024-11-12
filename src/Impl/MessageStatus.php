@@ -10,10 +10,13 @@ use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 class MessageStatus implements JsonSerializable
 {
 
-    public function __construct(
-        private readonly ?SuccessResult $success,
-        private readonly ?FailureResponse $failure
-    ) {
+    private /*?SuccessResult*/ $success;
+    private /*?FailureResponse*/ $failure;
+
+    public function __construct(?SuccessResult $success, ?FailureResponse $failure)
+    {
+        $this->success = $success;
+        $this->failure = $failure;
     }
 
     public static function ofSuccess(SuccessResult $success): MessageStatus

@@ -11,7 +11,7 @@ use Streamx\Clients\Ingestion\StreamxClient;
 
 class RestStreamxClient implements StreamxClient
 {
-    private RestPublisherProvider $publisherProvider;
+    private /*RestPublisherProvider*/ $publisherProvider;
 
     /**
      * @throws StreamxClientException

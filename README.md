@@ -4,7 +4,7 @@ StreamX PHP Ingestion Client enables publishing and unpublishing data to and fro
 REST Ingestion Service.
 
 # Requirements
-The minimal version of PHP to use the PHP Ingestion Client is 8.1
+PHP 7.3 or higher
 
 # Compatibility
 As of 2024-11-07, the supported version of StreamX is 0.0.45.
@@ -26,11 +26,22 @@ $pagesSchemaJson = file_get_contents('your-schema-files-directory/pages-schema.a
 $pageData = ['content' => ['bytes' => 'Hello, StreamX!']];
 
 // It can also be created as a PHP object that follows the same schema:
-class Page {
-    public function __construct(public Content $content) { }
+class Page
+{
+  public $content;
+
+  public function __construct(Content $content) {
+    $this->content = $content;
+  }
 }
-class Content {
-    public function __construct(public string $bytes) { }
+
+class Content
+{
+  public $bytes;
+
+  public function __construct(string $bytes) {
+    $this->bytes = $bytes;
+  }
 }
 $pageData = new Page(new Content('Hello, StreamX!'));
 
@@ -57,19 +68,17 @@ composer require streamx/ingestion-client
 
 # Run tests with coverage
 
-1. Install xdebug:
+1. Install xdebug (with version that supports PHP 7.3):
 ```bash
-pecl install xdebug
+pecl install xdebug-3.0.0
 ```
 
-2. Uncomment `coverage` section in `phpunit.xml`
-
-3. Configure xdebug mode:
+2. Configure xdebug mode:
 ```bash
 export XDEBUG_MODE=coverage
 ```
 
-4. Run tests with coverage and open results in web browser:
+3. Run tests with coverage and open results in web browser:
 ```bash
 ./vendor/bin/phpunit --coverage-text --coverage-html target/coverage-report
 open target/coverage-report/index.html

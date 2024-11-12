@@ -3,7 +3,6 @@
 namespace Streamx\Clients\Ingestion\Tests\Unit\Impl;
 
 use donatj\MockWebServer\ResponseStack;
-use PHPUnit\Framework\Attributes\Test;
 use Streamx\Clients\Ingestion\Builders\StreamxClientBuilders;
 use Streamx\Clients\Ingestion\Exceptions\ForbiddenChannelException;
 use Streamx\Clients\Ingestion\Exceptions\IngestionInputInvalidException;
@@ -20,7 +19,7 @@ class RestStreamxClientTest extends MockServerTestCase
 {
     private const LAST_REQUEST_OFFSET = -1;
 
-    #[Test]
+    /** @test */
     public function shouldPublishData()
     {
         // Given
@@ -45,7 +44,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->assertSuccessResult($result, 123456, $key);
     }
 
-    #[Test]
+    /** @test */
     public function shouldPublishDataAsAnArray()
     {
         // Given
@@ -67,7 +66,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->assertSuccessResult($result, 100232, $key);
     }
 
-    #[Test]
+    /** @test */
     public function shouldPublishDataAsMessage()
     {
         // Given
@@ -115,7 +114,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->assertSuccessResult($result, 123456, $key);
     }
 
-    #[Test]
+    /** @test */
     public function shouldUnpublishData()
     {
         // Given
@@ -136,7 +135,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->assertSuccessResult($result, 100205, $key);
     }
 
-    #[Test]
+    /** @test */
     public function shouldUnpublishDataAsMessage()
     {
         // Given
@@ -175,7 +174,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->assertSuccessResult($result, 100205, $key);
     }
 
-    #[Test]
+    /** @test */
     public function shouldHandleSuccessResponseWithUnknownProperty()
     {
         // Given
@@ -205,7 +204,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->assertSuccessResult($result, 123456, $key);
     }
 
-    #[Test]
+    /** @test */
     public function shouldMakeIngestionsWithAuthorizationToken()
     {
         // Given
@@ -240,7 +239,7 @@ class RestStreamxClientTest extends MockServerTestCase
             ['Authorization' => 'Bearer abc-100']);
     }
 
-    #[Test]
+    /** @test */
     public function shouldSendStringInUtf8Encoding()
     {
         // Given
@@ -262,7 +261,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->assertSuccessResult($result, 100298, $key);
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowExceptionWhenDataNotInUtf8Encoding()
     {
         // Given
@@ -276,7 +275,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->createPagesPublisher()->publish("latin-1", $data);
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowExceptionWhenMessagePropertyNotInUtf8Encoding()
     {
         // Given
@@ -294,7 +293,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->createPagesPublisher()->send($message);
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowExceptionWhenInvalidIngestionInput()
     {
         // Given
@@ -313,7 +312,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->createPublisherWithIrrelevantSchema($channel)->publish("key", $data);
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowExceptionWhenForbiddenChannel()
     {
         // Given
@@ -332,7 +331,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->createPublisherWithIrrelevantSchema($channel)->publish("key", $data);
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowExceptionWhenNotSupportedChannel()
     {
         // Given
@@ -351,7 +350,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->createPublisherWithIrrelevantSchema($channel)->publish("key", $data);
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowExceptionWhenNotSupportedChannelWhileUnpublishing()
     {
         // Given
@@ -368,7 +367,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->createPublisherWithIrrelevantSchema($channel)->unpublish("key");
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowExceptionWhenSendingEventError()
     {
         // Given
@@ -386,7 +385,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->createPublisherWithIrrelevantSchema("errors")->publish("500", $data);
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowExceptionWhenUnexpectedServerError()
     {
         // Given
@@ -404,7 +403,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->createPublisherWithIrrelevantSchema("errors")->publish("key", $data);
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowServiceFailureExceptionWhenUnknownServersideErrorCode()
     {
         // Given
@@ -422,7 +421,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->createPublisherWithIrrelevantSchema("errors")->publish("key", $data);
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowServiceFailureExceptionWhenErrorResponseWithSuccessHttpStatus()
     {
         // Given
@@ -440,8 +439,8 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->createPublisherWithIrrelevantSchema("errors")->publish("key", $data);
     }
 
-    #[Test]
-    public function shouldThrowExceptionWhenInvalidResponseModel()
+    /** @test */
+    public function shouldThrowExceptionWhenInvalidResponseFailureModel()
     {
         // Given
         $data = new Data('Test name');
@@ -458,7 +457,25 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->createPublisherWithIrrelevantSchema("errors")->publish("500", $data);
     }
 
-    #[Test]
+    /** @test */
+    public function shouldThrowExceptionWhenInvalidMessageStatusModel()
+    {
+        // Given
+        $data = new Data('Test name');
+
+        self::$server->setResponseOfPath('/ingestion/v1/channels/errors/messages',
+            StreamxResponse::custom(202, '{"invalid}": "data"'));
+
+        // Expect exception
+        $this->expectException(StreamxClientException::class);
+        $this->expectExceptionMessage('Communication error. Response status: 202. Message: ' .
+            'Response could not be parsed.');
+
+        // When
+        $this->createPublisherWithIrrelevantSchema("errors")->publish("202", $data);
+    }
+
+    /** @test */
     public function shouldThrowExceptionWhenUnknownResponseModel()
     {
         // Given
@@ -476,7 +493,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->createPublisherWithIrrelevantSchema("errors")->publish("500", $data);
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowExceptionWhenUndefinedServerError()
     {
         // Given
@@ -493,7 +510,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->createPublisherWithIrrelevantSchema("errors")->publish("408", $data);
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowExceptionWhenUnauthorizedError()
     {
         // Given
@@ -510,7 +527,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->createPublisherWithIrrelevantSchema("errors")->publish("401", $data);
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowExceptionWhenNonExistingHost()
     {
         // Given
@@ -527,7 +544,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->createPublisherWithIrrelevantSchema("errors")->publish("non-existing-host", $data);
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowExceptionWhenNonExistingHostWhileUnpublishing()
     {
         // Given
@@ -542,7 +559,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->createPublisherWithIrrelevantSchema("errors")->unpublish("non-existing-host");
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowExceptionWhenRelativeUrl()
     {
         // Given
@@ -557,7 +574,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->client = StreamxClientBuilders::create($serverUrl)->build();
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowExceptionWhenUrlWithoutHost()
     {
         // Given
@@ -572,7 +589,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->client = StreamxClientBuilders::create($serverUrl)->build();
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowExceptionWhenMalformedUrl()
     {
         // Given
@@ -597,21 +614,25 @@ class RestStreamxClientTest extends MockServerTestCase
 
 class NestedData
 {
+    public /*Data*/ $data;
+    public /*string*/ $property;
 
-    public function __construct(
-        public Data $data,
-        public string $property
-    ) {
+    public function __construct(Data $data, string $property)
+    {
+        $this->data = $data;
+        $this->property = $property;
     }
 }
 
 class Data
 {
+    public /*string*/ $name;
+    public /*?string*/ $description;
 
-    public function __construct(
-        public string $name,
-        public ?string $description = null
-    ) {
+    public function __construct(string $name, ?string $description = null)
+    {
+        $this->name = $name;
+        $this->description = $description;
     }
 
 }

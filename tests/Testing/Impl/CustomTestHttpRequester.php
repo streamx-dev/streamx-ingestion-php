@@ -11,10 +11,13 @@ use Streamx\Clients\Ingestion\StreamxClient;
 class CustomTestHttpRequester implements HttpRequester
 {
 
-    public function __construct(
-        private readonly string $ingestionEndpointPath,
-        private readonly HttpRequester $httpRequester = new GuzzleHttpRequester()
-    ) {
+    private /*string*/ $ingestionEndpointPath;
+    private /*HttpRequester*/ $httpRequester;
+
+    public function __construct(string $ingestionEndpointPath)
+    {
+        $this->ingestionEndpointPath = $ingestionEndpointPath;
+        $this->httpRequester = new GuzzleHttpRequester();
     }
 
     public function executePost(

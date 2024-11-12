@@ -4,5 +4,10 @@ namespace Streamx\Clients\Ingestion\Tests\Testing\Model;
 
 class Content
 {
-    public function __construct(public string $bytes) { }
+    public /*string*/ $bytes;
+
+    public function __construct(string $bytes)
+    {
+        $this->bytes = $bytes;
+    }
 }

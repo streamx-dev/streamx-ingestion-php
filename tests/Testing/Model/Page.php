@@ -4,5 +4,10 @@ namespace Streamx\Clients\Ingestion\Tests\Testing\Model;
 
 class Page
 {
-    public function __construct(public Content $content) { }
+    public /*Content*/ $content;
+
+    public function __construct(Content $content)
+    {
+        $this->content = $content;
+    }
 }

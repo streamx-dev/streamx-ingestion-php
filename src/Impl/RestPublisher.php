@@ -13,19 +13,25 @@ use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 
 class RestPublisher extends Publisher
 {
-    private array $headers;
-    private UriInterface $messageIngestionEndpointUri;
+    private /*array*/ $headers;
+    private /*UriInterface*/ $messageIngestionEndpointUri;
+    private /*string*/ $channelSchemaJson;
+    private /*HttpRequester*/ $httpRequester;
+    private /*JsonProvider*/ $jsonProvider;
 
     public function __construct(
         UriInterface $ingestionEndpointUri,
-        private readonly string $channel,
-        private readonly string $channelSchemaJson,
+        string $channel,
+        string $channelSchemaJson,
         ?string $authToken,
-        private readonly HttpRequester $httpRequester,
-        private readonly JsonProvider $jsonProvider
+        HttpRequester $httpRequester,
+        JsonProvider $jsonProvider
     ) {
         $this->headers = $this->buildHttpHeaders($authToken);
         $this->messageIngestionEndpointUri = $this->buildMessageIngestionUri($ingestionEndpointUri, $channel);
+        $this->channelSchemaJson = $channelSchemaJson;
+        $this->httpRequester = $httpRequester;
+        $this->jsonProvider = $jsonProvider;
     }
 
     public function send(Message $message): SuccessResult
