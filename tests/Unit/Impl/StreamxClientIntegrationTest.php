@@ -99,11 +99,6 @@ class StreamxClientIntegrationTest extends TestCase {
         $this->assertPageIsUnpublished($key);
     }
 
-    private static function currentTimeMills(): int
-    {
-        return (int) (microtime(true) * 1000);
-    }
-
     private function assertPageIsPublished(string $key) {
         $url = self::DELIVERY_BASE_URL . '/' . $key;
     
