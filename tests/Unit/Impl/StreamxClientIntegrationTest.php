@@ -22,43 +22,48 @@ use Streamx\Clients\Ingestion\Tests\Testing\Model\Page;
  */
 class StreamxClientIntegrationTest extends TestCase {
 
-    private static StreamXClient $client;
-    private static Publisher $publisher;
-
     private const INGESTION_BASE_URL = "http://localhost:8080";
     private const DELIVERY_BASE_URL = "http://localhost:8081";
     private const PAGES_SCHEMA_NAME = 'dev.streamx.blueprints.data.PageIngestionMessage';
 
-    private const PAGE_MAP_KEY = "page-map-key";
     private const PAGE_OBJECT_KEY = "page-object-key";
+    private const PAGE_ARRAY_KEY = "page-array-key";
     private const MESSAGE_OBJECT_KEY = "message-object-key";
+    private const MESSAGE_OBJECT_WITH_PAGE_ARRAY_KEY = "message-object-with-page-array-key";
 
     private const CONTENT = "test content from php client";
     private const TIMEOUT_SECONDS = 3;
 
+    private static StreamXClient $client;
+    private static Publisher $publisher;
+    private static Page $page;
+    private static array $pageArray;
+
     public static function setUpBeforeClass(): void {
         self::$client = StreamxClientBuilders::create(self::INGESTION_BASE_URL)->build();
         self::$publisher = self::$client->newPublisher("pages", self::PAGES_SCHEMA_NAME);
+        self::$page = new Page(new Content(self::CONTENT));
+        self::$pageArray = ['content' => ['bytes' => self::CONTENT]];
     }
 
     //** @test */
     public function shouldPublishAndUnpublishPageObject() {
-        $key = self::PAGE_OBJECT_KEY;
-        $page = new Page(new Content(self::CONTENT));
-
-        self::$publisher->publish($key, $page);
-        $this->assertPageIsPublished($key);
-
-        self::$publisher->unpublish($key);
-        $this->assertPageIsUnpublished($key);
+        $this->shouldPublishAndUnpublishPagePayload(
+            self::PAGE_OBJECT_KEY,
+            self::$page
+        );
     }
 
     //** @test */
     public function shouldPublishAndUnpublishPageArray() {
-        $key = self::PAGE_MAP_KEY;
-        $page = ['content' => ['bytes' => self::CONTENT]];
+        $this->shouldPublishAndUnpublishPagePayload(
+            self::PAGE_ARRAY_KEY,
+            self::$pageArray
+        );
+    }
 
-        self::$publisher->publish($key, $page);
+    private function shouldPublishAndUnpublishPagePayload($key, $pagePayload) {
+        self::$publisher->publish($key, $pagePayload);
         $this->assertPageIsPublished($key);
 
         self::$publisher->unpublish($key);
@@ -66,11 +71,23 @@ class StreamxClientIntegrationTest extends TestCase {
     }
 
     //** @test */
-    public function shouldPublishAndUnpublishMessageObject() {
-        $key = self::MESSAGE_OBJECT_KEY;
-        $page = new Page(new Content(self::CONTENT));
+    public function shouldPublishAndUnpublishMessageWithPageObject() {
+        $this->shouldPublishAndUnpublishPageMessage(
+            self::MESSAGE_OBJECT_KEY,
+            self::$page
+        );
+    }
 
-        $message = (Message::newPublishMessage($key, $page))
+    //** @test */
+    public function shouldPublishAndUnpublishMessageWithPageArray() {
+        $this->shouldPublishAndUnpublishPageMessage(
+            self::MESSAGE_OBJECT_WITH_PAGE_ARRAY_KEY,
+            self::$pageArray
+        );
+    }
+
+    private function shouldPublishAndUnpublishPageMessage(string $key, $pagePayload) {
+        $message = (Message::newPublishMessage($key, $pagePayload))
             ->withEventTime((int) (microtime(true) * 1000))
             ->withProperties(['prop-1' => 'value-1', 'prop-2' => 'value-2'])
             ->build();
@@ -80,6 +97,11 @@ class StreamxClientIntegrationTest extends TestCase {
         $message = (Message::newUnpublishMessage($key))->build();
         self::$publisher->send($message);
         $this->assertPageIsUnpublished($key);
+    }
+
+    private static function currentTimeMills(): int
+    {
+        return (int) (microtime(true) * 1000);
     }
 
     private function assertPageIsPublished(string $key) {

@@ -55,6 +55,12 @@ $pagesPublisher->publish('index.html', $pageData);
 // Unpublish data (payload is not needed)
 $pagesPublisher->unpublish('index.html');
 
+// To pass customized event time and properties, use the send(Message) method:
+$message = (Message::newPublishMessage('index.html', $pageData))
+    ->withEventTime(1731498686)
+    ->withProperties(['prop-1' => 'value-1', 'prop-2' => 'value-2'])
+    ->build();
+$pagesPublisher->send($message);
 ```
 
 # Installation
