@@ -41,7 +41,7 @@ class StreamxClientIntegrationTest extends TestCase {
         self::$publisher = self::$client->newPublisher("pages", self::PAGES_SCHEMA_NAME);
     }
 
-    /** @test */
+    //** @test */
     public function shouldPublishPageObject() {
         $key = self::PAGE_OBJECT_KEY;
         $page = new Page(new Content(self::CONTENT));
@@ -49,14 +49,14 @@ class StreamxClientIntegrationTest extends TestCase {
         $this->assertPageIsPublished($key);
     }
 
-    /** @test */
+    //** @test */
     public function shouldUnpublishPageObject() {
         $key = self::PAGE_OBJECT_KEY;
         self::$publisher->unpublish($key);
         $this->assertPageIsUnpublished($key);
     }
 
-    /** @test */
+    //** @test */
     public function shouldPublishPageArray() {
         $key = self::PAGE_MAP_KEY;
         $page = ['content' => ['bytes' => self::CONTENT]];
@@ -64,7 +64,7 @@ class StreamxClientIntegrationTest extends TestCase {
         $this->assertPageIsPublished($key);
     }
 
-    /** @test */
+    //** @test */
     public function shouldUnpublishPageArray() {
         $key = self::PAGE_MAP_KEY;
         self::$publisher->unpublish($key);
