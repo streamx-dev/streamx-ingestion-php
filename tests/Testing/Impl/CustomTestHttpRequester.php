@@ -11,8 +11,8 @@ use Streamx\Clients\Ingestion\StreamxClient;
 class CustomTestHttpRequester implements HttpRequester
 {
 
-    private /*string*/ $ingestionEndpointPath;
-    private /*HttpRequester*/ $httpRequester;
+    private string $ingestionEndpointPath;
+    private HttpRequester $httpRequester;
 
     public function __construct(string $ingestionEndpointPath)
     {

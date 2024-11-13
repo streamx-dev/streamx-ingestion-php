@@ -7,10 +7,10 @@ class Message
     public const PUBLISH_ACTION = "publish";
     public const UNPUBLISH_ACTION = "unpublish";
 
-    public /*string*/ $key;
-    public /*string*/ $action;
-    public /*?int*/ $eventTime;
-    public /*object*/ $properties; // no Map type in php. Array is serialized by json_encode with square braces. Use object to receive serializing the properties in curly braces
+    public string $key;
+    public string $action;
+    public ?int $eventTime;
+    public object $properties; // no Map type in php. Array is serialized by json_encode with square braces. Use object to receive serializing the properties in curly braces
     public /*array|object|null*/ $payload;
 
     public function __construct(string $key, string $action, ?int $eventTime, object $properties, $payload)
@@ -36,10 +36,10 @@ class Message
 
 class MessageBuilder
 {
-    public /*string*/ $key;
-    public /*string*/ $action;
-    public /*?int*/ $eventTime;
-    public /*object*/ $properties;
+    public string $key;
+    public string $action;
+    public ?int $eventTime;
+    public object $properties;
     public /*array|object|null*/ $payload;
 
     public function __construct(string $key, string $action)

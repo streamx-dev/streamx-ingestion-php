@@ -630,8 +630,8 @@ class RestStreamxClientTest extends MockServerTestCase
 
 class NestedData
 {
-    public /*Data*/ $data;
-    public /*string*/ $property;
+    public Data $data;
+    public string $property;
 
     public function __construct(Data $data, string $property)
     {
@@ -642,8 +642,8 @@ class NestedData
 
 class Data
 {
-    public /*string*/ $name;
-    public /*?string*/ $description;
+    public string $name;
+    public ?string $description;
 
     public function __construct(string $name, ?string $description = null)
     {

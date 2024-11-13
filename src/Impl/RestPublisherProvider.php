@@ -10,10 +10,10 @@ use Streamx\Clients\Ingestion\Publisher\Publisher;
 class RestPublisherProvider
 {
 
-    private /*UriInterface*/ $ingestionEndpointUri;
-    private /*?string*/ $authToken;
-    private /*HttpRequester*/ $httpRequester;
-    private /*JsonProvider*/ $jsonProvider;
+    private UriInterface $ingestionEndpointUri;
+    private ?string $authToken;
+    private HttpRequester $httpRequester;
+    private JsonProvider $jsonProvider;
 
     public function __construct(
         UriInterface $ingestionEndpointUri,

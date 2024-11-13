@@ -12,8 +12,8 @@ use Streamx\Clients\Ingestion\Impl\Utils\DataValidator;
 class SuccessResult implements JsonSerializable
 {
 
-    private /*int*/ $eventTime;
-    private /*string*/ $key;
+    private int $eventTime;
+    private string $key;
 
     /**
      * Constructs {@link SuccessResult} instance.

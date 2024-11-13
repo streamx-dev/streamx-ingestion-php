@@ -11,11 +11,11 @@ use Streamx\Clients\Ingestion\StreamxClient;
 
 class MockServerTestCase extends TestCase
 {
-    protected static /*MockWebServer*/ $server;
-    protected static /*string*/ $pagesSchemaName;
-    protected static /*string*/ $dummySchemaName;
+    protected static MockWebServer $server;
+    protected static string $pagesSchemaName;
+    protected static string $dummySchemaName;
 
-    protected /*StreamxClient*/ $client;
+    protected StreamxClient $client;
 
     public static function setUpBeforeClass(): void
     {

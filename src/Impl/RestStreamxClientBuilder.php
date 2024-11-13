@@ -10,12 +10,12 @@ use Streamx\Clients\Ingestion\StreamxClientBuilder;
 
 class RestStreamxClientBuilder implements StreamxClientBuilder
 {
-    private /*string*/ $serverUrl;
-    private /*?string*/ $ingestionEndpointUri = null;
-    private /*?string*/ $authToken = null;
-    private /*?HttpRequester*/ $httpRequester = null;
-    private /*?ClientInterface*/ $httpClient = null;
-    private /*?JsonProvider*/ $jsonProvider = null;
+    private string $serverUrl;
+    private ?string $ingestionEndpointUri = null;
+    private ?string $authToken = null;
+    private ?HttpRequester $httpRequester = null;
+    private ?ClientInterface $httpClient = null;
+    private ?JsonProvider $jsonProvider = null;
 
     public function __construct(string $serverUrl)
     {

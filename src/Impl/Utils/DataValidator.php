@@ -4,7 +4,7 @@ namespace Streamx\Clients\Ingestion\Impl\Utils;
 
 class DataValidator
 {
-    private /*object*/ $object;
+    private object $object;
 
     private function __construct(object $object)
     {

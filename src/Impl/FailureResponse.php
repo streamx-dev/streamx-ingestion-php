@@ -8,8 +8,8 @@ use Streamx\Clients\Ingestion\Impl\Utils\DataValidator;
 
 class FailureResponse implements JsonSerializable
 {
-    private /*string*/ $errorCode;
-    private /*string*/ $errorMessage;
+    private string $errorCode;
+    private string $errorMessage;
 
     public function __construct(string $errorCode, string $errorMessage)
     {

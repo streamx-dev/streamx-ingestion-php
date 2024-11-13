@@ -22,8 +22,8 @@ use Streamx\Clients\Ingestion\Tests\Testing\Model\Page;
  */
 class StreamxClientIntegrationTest extends TestCase {
 
-    private static /*StreamXClient*/ $client;
-    private static /*Publisher*/ $publisher;
+    private static StreamXClient $client;
+    private static Publisher $publisher;
 
     private const INGESTION_BASE_URL = "http://localhost:8080";
     private const DELIVERY_BASE_URL = "http://localhost:8081";

@@ -14,11 +14,11 @@ use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 
 class RestPublisher extends Publisher
 {
-    private /*array*/ $headers;
-    private /*UriInterface*/ $messageIngestionEndpointUri;
-    private /*string*/ $payloadTypeName;
-    private /*HttpRequester*/ $httpRequester;
-    private /*JsonProvider*/ $jsonProvider;
+    private array $headers;
+    private UriInterface $messageIngestionEndpointUri;
+    private string $payloadTypeName;
+    private HttpRequester $httpRequester;
+    private JsonProvider $jsonProvider;
 
     public function __construct(
         UriInterface $ingestionEndpointUri,

@@ -4,7 +4,7 @@ namespace Streamx\Clients\Ingestion\Tests\Testing\Model;
 
 class Content
 {
-    public /*string*/ $bytes;
+    public string $bytes;
 
     public function __construct(string $bytes)
     {

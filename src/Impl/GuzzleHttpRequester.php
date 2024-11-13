@@ -17,7 +17,7 @@ use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 class GuzzleHttpRequester implements HttpRequester
 {
 
-    private /*ClientInterface*/ $httpClient;
+    private ClientInterface $httpClient;
 
     public function __construct(?ClientInterface $httpClient = null)
     {

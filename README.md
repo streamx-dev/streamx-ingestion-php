@@ -4,7 +4,7 @@ StreamX PHP Ingestion Client enables publishing and unpublishing data to and fro
 REST Ingestion Service.
 
 # Requirements
-PHP 7.3 or higher
+PHP 7.4 or higher
 
 # Compatibility
 As of 2024-11-07, the supported version of StreamX is 0.0.45.
@@ -68,9 +68,9 @@ composer require streamx/ingestion-client
 
 # Run tests with coverage
 
-1. Install xdebug (with version that supports PHP 7.3):
+1. Install xdebug (with version that supports PHP 7.4):
 ```bash
-pecl install xdebug-3.0.0
+pecl install xdebug-3.1.5
 ```
 
 2. Configure xdebug mode:

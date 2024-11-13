@@ -8,7 +8,7 @@ use Streamx\Clients\Ingestion\Publisher\Message;
 class CustomTestJsonProvider extends DefaultJsonProvider
 {
     
-    private /*string*/ $customFieldValue;
+    private string $customFieldValue;
 
     public function __construct(string $customFieldValue)
     {
