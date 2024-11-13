@@ -45,9 +45,9 @@ class Content
 }
 $pageData = new Page(new Content('Hello, StreamX!'));
 
-// Create the client and a publisher dedicated to a specific 'channel'
+// Create the client and a publisher dedicated to a specific channel. The channel schema name can be retrieved from your StreamX instance
 $ingestionClient = StreamxClientBuilders::create('http://localhost:8080')->build();
-$pagesPublisher = $ingestionClient->newPublisher("pages", $pagesSchemaJson);
+$pagesPublisher = $ingestionClient->newPublisher("pages", $channelSchemaName);
 
 // Publish data
 $pagesPublisher->publish('index.html', $pageData);
