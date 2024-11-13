@@ -19,8 +19,9 @@ As of 2024-11-07, the supported version of StreamX is 0.0.45.
 # Example usage:
 
 ```php
-// Download schema for the channel from appropriate StreamX endpoint, then save it to a local file. Load it into a string:
-$pagesSchemaJson = file_get_contents('your-schema-files-directory/pages-schema.avsc');
+// Check current schema for the channel where you want to publish/unpublish, using appropriate StreamX endpoint.
+// Save the fully qualified name of the channel schema to a variable. Example:
+$channelSchemaName = 'dev.streamx.blueprints.data.PageIngestionMessage';
 
 // Create some test content that matches the channel schema. It can be created as an associative array:
 $pageData = ['content' => ['bytes' => 'Hello, StreamX!']];
@@ -45,7 +46,7 @@ class Content
 }
 $pageData = new Page(new Content('Hello, StreamX!'));
 
-// Create the client and a publisher dedicated to a specific channel. The channel schema name can be retrieved from your StreamX instance
+// Create the client and a publisher dedicated to a specific channel:
 $ingestionClient = StreamxClientBuilders::create('http://localhost:8080')->build();
 $pagesPublisher = $ingestionClient->newPublisher("pages", $channelSchemaName);
 
