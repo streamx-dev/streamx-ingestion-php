@@ -24,47 +24,67 @@ class StreamxClientIntegrationTest extends TestCase {
 
     private static /*StreamXClient*/ $client;
     private static /*Publisher*/ $publisher;
-    private static /*string*/ $pagesSchemaJson;
 
     private const INGESTION_BASE_URL = "http://localhost:8080";
     private const DELIVERY_BASE_URL = "http://localhost:8081";
-    private const PAGE_KEY = "data-key-from-php";
-    private const MESSAGE_KEY = "message-key-from-php";
-    private const CONTENT = "some bytes from php client";
+    private const PAGES_SCHEMA_NAME = 'dev.streamx.blueprints.data.PageIngestionMessage';
+
+    private const PAGE_MAP_KEY = "page-map-key";
+    private const PAGE_OBJECT_KEY = "page-object-key";
+    private const MESSAGE_OBJECT_KEY = "message-object-key";
+
+    private const CONTENT = "test content from php client";
     private const TIMEOUT_SECONDS = 3;
 
     public static function setUpBeforeClass(): void {
         self::$client = StreamxClientBuilders::create(self::INGESTION_BASE_URL)->build();
-        self::$pagesSchemaJson = file_get_contents('tests/resources/integration-pages-schema.avsc');
-        self::$publisher = self::$client->newPublisher("pages", self::$pagesSchemaJson);
+        self::$publisher = self::$client->newPublisher("pages", self::PAGES_SCHEMA_NAME);
     }
 
-    //** @test */
-    public function shouldPublishPageToStreamX() {
+    /** @test */
+    public function shouldPublishPageObject() {
+        $key = self::PAGE_OBJECT_KEY;
         $page = new Page(new Content(self::CONTENT));
-        self::$publisher->publish(self::PAGE_KEY, $page);
-        $this->assertPageIsPublished(self::PAGE_KEY);
+        self::$publisher->publish($key, $page);
+        $this->assertPageIsPublished($key);
     }
 
-    //** @test */
-    public function shouldUnpublishPageFromStreamX() {
-        self::$publisher->unpublish(self::PAGE_KEY);
-        $this->assertPageIsUnpublished(self::PAGE_KEY);
+    /** @test */
+    public function shouldUnpublishPageObject() {
+        $key = self::PAGE_OBJECT_KEY;
+        self::$publisher->unpublish($key);
+        $this->assertPageIsUnpublished($key);
     }
 
-    //** @test */
-    public function shouldPublishPageMessageToStreamX() {
+    /** @test */
+    public function shouldPublishPageArray() {
+        $key = self::PAGE_MAP_KEY;
+        $page = ['content' => ['bytes' => self::CONTENT]];
+        self::$publisher->publish($key, $page);
+        $this->assertPageIsPublished($key);
+    }
+
+    /** @test */
+    public function shouldUnpublishPageArray() {
+        $key = self::PAGE_MAP_KEY;
+        self::$publisher->unpublish($key);
+        $this->assertPageIsUnpublished($key);
+    }
+
+    /** @test */
+    public function shouldPublishMessageObject() {
         $page = new Page(new Content(self::CONTENT));
-        $message = (Message::newPublishMessage(self::MESSAGE_KEY, $page))->build();
+        $message = (Message::newPublishMessage(self::MESSAGE_OBJECT_KEY, $page))->build();
         self::$publisher->send($message);
-        $this->assertPageIsPublished(self::MESSAGE_KEY);
+        $this->assertPageIsPublished(self::MESSAGE_OBJECT_KEY);
     }
 
-    //** @test */
-    public function shouldUnpublishPageMessageFromStreamX() {
-        $message = (Message::newUnpublishMessage(self::MESSAGE_KEY))->build();
+    /** @test */
+    public function shouldUnpublishMessageObjectFromStreamX() {
+        $key = self::PAGE_OBJECT_KEY;
+        $message = (Message::newUnpublishMessage(self::MESSAGE_OBJECT_KEY))->build();
         self::$publisher->send($message);
-        $this->assertPageIsUnpublished(self::MESSAGE_KEY);
+        $this->assertPageIsUnpublished(self::MESSAGE_OBJECT_KEY);
     }
 
     private function assertPageIsPublished(string $key) {

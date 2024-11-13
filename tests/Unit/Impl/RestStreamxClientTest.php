@@ -3,6 +3,7 @@
 namespace Streamx\Clients\Ingestion\Tests\Unit\Impl;
 
 use donatj\MockWebServer\ResponseStack;
+use InvalidArgumentException;
 use Streamx\Clients\Ingestion\Builders\StreamxClientBuilders;
 use Streamx\Clients\Ingestion\Exceptions\ForbiddenChannelException;
 use Streamx\Clients\Ingestion\Exceptions\IngestionInputInvalidException;
@@ -291,6 +292,21 @@ class RestStreamxClientTest extends MockServerTestCase
 
         // When
         $this->createPagesPublisher()->send($message);
+    }
+
+    /** @test */
+    public function shouldThrowExceptionWhenInvalidChannelSchemaName()
+    {
+        // Given
+        $channel = 'pages';
+        $channelSchemaName = 'schemas.model.Page';
+
+        // Expect exception
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Expected the provided channel schema name '$channelSchemaName' to end with 'IngestionMessage'");
+
+        // When
+        $this->client->newPublisher($channel, $channelSchemaName);
     }
 
     /** @test */

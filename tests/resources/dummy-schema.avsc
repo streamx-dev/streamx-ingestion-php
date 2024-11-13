@@ -1,6 +1,0 @@
-{
-    "type": "record",
-    "name": "DummyMessage",
-    "namespace": "dev.streamx.data.model",
-    "fields": [ ]
-  }

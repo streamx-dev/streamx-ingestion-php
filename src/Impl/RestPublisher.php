@@ -2,6 +2,7 @@
 
 namespace Streamx\Clients\Ingestion\Impl;
 
+use InvalidArgumentException;
 use Psr\Http\Message\UriInterface;
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
 use Streamx\Clients\Ingestion\Impl\Utils\HttpUtils;
@@ -15,28 +16,38 @@ class RestPublisher extends Publisher
 {
     private /*array*/ $headers;
     private /*UriInterface*/ $messageIngestionEndpointUri;
-    private /*string*/ $channelSchemaJson;
+    private /*string*/ $payloadTypeName;
     private /*HttpRequester*/ $httpRequester;
     private /*JsonProvider*/ $jsonProvider;
 
     public function __construct(
         UriInterface $ingestionEndpointUri,
         string $channel,
-        string $channelSchemaJson,
+        string $channelSchemaName,
         ?string $authToken,
         HttpRequester $httpRequester,
         JsonProvider $jsonProvider
     ) {
         $this->headers = $this->buildHttpHeaders($authToken);
         $this->messageIngestionEndpointUri = $this->buildMessageIngestionUri($ingestionEndpointUri, $channel);
-        $this->channelSchemaJson = $channelSchemaJson;
+        $this->payloadTypeName = $this->convertToPayloadTypeName($channelSchemaName);
         $this->httpRequester = $httpRequester;
         $this->jsonProvider = $jsonProvider;
     }
 
+    private function convertToPayloadTypeName($channelSchemaName): string
+    {
+        $payloadTypeName = preg_replace('/IngestionMessage$/', '', $channelSchemaName);
+        if ($payloadTypeName == $channelSchemaName)
+        {
+            throw new InvalidArgumentException("Expected the provided channel schema name '$channelSchemaName' to end with 'IngestionMessage'");
+        }
+        return $payloadTypeName;
+    }
+
     public function send(Message $message): SuccessResult
     {
-        $json = $this->jsonProvider->getJson($message, $this->channelSchemaJson);
+        $json = $this->jsonProvider->getJson($message, $this->payloadTypeName);
         $actualHeaders = $message->action == Message::PUBLISH_ACTION
             ? array_merge($this->headers, ['Content-Type' => 'application/json; charset=UTF-8'])
             : $this->headers;

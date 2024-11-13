@@ -4,49 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "cbf5dbd7bb6c8138a8b0576988a954a2",
+    "content-hash": "640a14364df6b7912fa8857eff42b2d4",
     "packages": [
-        {
-            "name": "flix-tech/avro-php",
-            "version": "4.2.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/flix-tech/avro-php.git",
-                "reference": "d56613999a042c26dad8d5f2d53012cd3db4b8f7"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/flix-tech/avro-php/zipball/d56613999a042c26dad8d5f2d53012cd3db4b8f7",
-                "reference": "d56613999a042c26dad8d5f2d53012cd3db4b8f7",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=7.1"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "^5.0"
-            },
-            "suggest": {
-                "ext-gmp": "Large integer support for 32-bit platforms.",
-                "ext-snappy": "Snappy support for Snappy codec (mainly Google).",
-                "ext-zlib": "Zlib support for Deflate codec."
-            },
-            "type": "library",
-            "autoload": {
-                "classmap": [
-                    "lib/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "Apache-2.0"
-            ],
-            "description": "Avro schema encoder/decoder. Fork of rg/avro-php",
-            "support": {
-                "source": "https://github.com/flix-tech/avro-php/tree/4.2.0"
-            },
-            "time": "2022-01-12T13:54:45+00:00"
-        },
         {
             "name": "guzzlehttp/guzzle",
             "version": "7.9.2",

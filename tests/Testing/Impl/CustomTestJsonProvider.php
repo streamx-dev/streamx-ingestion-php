@@ -15,9 +15,9 @@ class CustomTestJsonProvider extends DefaultJsonProvider
         $this->customFieldValue = $customFieldValue;
     }
 
-    public function getJson(Message $message, string $schema): string
+    public function getJson(Message $message, string $payloadTypeName): string
     {
         $message->payload['customProperty'] = $this->customFieldValue;
-        return parent::getJson($message, $schema);
+        return parent::getJson($message, $payloadTypeName);
     }
 }

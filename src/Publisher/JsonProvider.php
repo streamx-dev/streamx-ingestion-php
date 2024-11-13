@@ -12,9 +12,9 @@ interface JsonProvider
     /**
      * Generates JSON string from input data.
      * @param Message $message Source ingestion message.
-     * @param string $schemaJson Schema to use for serializing the message to JSON.
+     * @param string $payloadTypeName Fully qualified name of the Message payload.
      * @return string Created JSON.
      * @throws StreamxClientException
      */
-    public function getJson(Message $message, string $schemaJson): string;
+    public function getJson(Message $message, string $payloadTypeName): string;
 }

@@ -12,8 +12,8 @@ use Streamx\Clients\Ingestion\StreamxClient;
 class MockServerTestCase extends TestCase
 {
     protected static /*MockWebServer*/ $server;
-    protected static /*string*/ $pagesSchemaJson;
-    protected static /*string*/ $dummySchemaJson;
+    protected static /*string*/ $pagesSchemaName;
+    protected static /*string*/ $dummySchemaName;
 
     protected /*StreamxClient*/ $client;
 
@@ -22,8 +22,8 @@ class MockServerTestCase extends TestCase
         self::$server = new MockWebServer();
         self::$server->start();
         self::$server->setDefaultResponse(StreamxResponse::success(-1, 'any'));
-        self::$pagesSchemaJson = file_get_contents('tests/resources/pages-schema.avsc');
-        self::$dummySchemaJson = file_get_contents('tests/resources/dummy-schema.avsc');
+        self::$pagesSchemaName = 'dev.streamx.data.model.PageIngestionMessage';
+        self::$dummySchemaName = 'dev.streamx.data.model.DummyIngestionMessage';
     }
 
     protected function setUp(): void
@@ -38,12 +38,12 @@ class MockServerTestCase extends TestCase
 
     protected function createPagesPublisher() : Publisher
     {
-        return $this->client->newPublisher("pages", self::$pagesSchemaJson);
+        return $this->client->newPublisher("pages", self::$pagesSchemaName);
     }
 
     protected function createPublisherWithIrrelevantSchema(string $channel) : Publisher
     {
-        return $this->client->newPublisher($channel, self::$dummySchemaJson);
+        return $this->client->newPublisher($channel, self::$dummySchemaName);
     }
 
     protected function defaultPublishMessageJson($key, $payload): string

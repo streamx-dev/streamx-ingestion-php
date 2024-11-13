@@ -28,8 +28,8 @@ class RestStreamxClient implements StreamxClient
             $httpRequester, $jsonProvider);
     }
 
-    public function newPublisher(string $channel, string $channelSchemaJson): Publisher
+    public function newPublisher(string $channel, string $channelSchemaName): Publisher
     {
-        return $this->publisherProvider->newPublisher($channel, $channelSchemaJson);
+        return $this->publisherProvider->newPublisher($channel, $channelSchemaName);
     }
 }
