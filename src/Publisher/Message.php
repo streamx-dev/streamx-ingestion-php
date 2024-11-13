@@ -9,7 +9,7 @@ class Message
 
     public string $key;
     public string $action;
-    public ?int $eventTime;
+    public ?object $eventTime; // null or object {'long': eventTime}
     public object $properties; // no Map type in php. Array is serialized by json_encode with square braces. Use object to receive serializing the properties in curly braces
     public /*array|object|null*/ $payload;
 
@@ -17,9 +17,18 @@ class Message
     {
         $this->key = $key;
         $this->action = $action;
-        $this->eventTime = $eventTime;
+        $this->eventTime = self::wrapEventTime($eventTime);
         $this->properties = $properties;
         $this->payload = $payload;
+    }
+
+    private static function wrapEventTime(?int $eventTime): ?object
+    {
+        if ($eventTime == null) {
+            return null;
+        }
+        $arr = array('long' => $eventTime); // use intermediate array due to "long" being a reserved name
+        return (object) $arr;
     }
 
     public static function newPublishMessage(string $key, $payload): MessageBuilder

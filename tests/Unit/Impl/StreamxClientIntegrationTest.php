@@ -42,47 +42,41 @@ class StreamxClientIntegrationTest extends TestCase {
     }
 
     //** @test */
-    public function shouldPublishPageObject() {
+    public function shouldPublishAndUnpublishPageObject() {
         $key = self::PAGE_OBJECT_KEY;
         $page = new Page(new Content(self::CONTENT));
+
         self::$publisher->publish($key, $page);
         $this->assertPageIsPublished($key);
-    }
 
-    //** @test */
-    public function shouldUnpublishPageObject() {
-        $key = self::PAGE_OBJECT_KEY;
         self::$publisher->unpublish($key);
         $this->assertPageIsUnpublished($key);
     }
 
     //** @test */
-    public function shouldPublishPageArray() {
+    public function shouldPublishAndUnpublishPageArray() {
         $key = self::PAGE_MAP_KEY;
         $page = ['content' => ['bytes' => self::CONTENT]];
+
         self::$publisher->publish($key, $page);
         $this->assertPageIsPublished($key);
-    }
 
-    //** @test */
-    public function shouldUnpublishPageArray() {
-        $key = self::PAGE_MAP_KEY;
         self::$publisher->unpublish($key);
         $this->assertPageIsUnpublished($key);
     }
 
-    /** @test */
-    public function shouldPublishMessageObject() {
+    //** @test */
+    public function shouldPublishAndUnpublishMessageObject() {
         $key = self::MESSAGE_OBJECT_KEY;
         $page = new Page(new Content(self::CONTENT));
-        $message = (Message::newPublishMessage($key, $page))->build();
+
+        $message = (Message::newPublishMessage($key, $page))
+            ->withEventTime((int) (microtime(true) * 1000))
+            ->withProperties(['prop-1' => 'value-1', 'prop-2' => 'value-2'])
+            ->build();
         self::$publisher->send($message);
         $this->assertPageIsPublished($key);
-    }
 
-    /** @test */
-    public function shouldUnpublishMessageObjectFromStreamX() {
-        $key = self::MESSAGE_OBJECT_KEY;
         $message = (Message::newUnpublishMessage($key))->build();
         self::$publisher->send($message);
         $this->assertPageIsUnpublished($key);
@@ -92,7 +86,7 @@ class StreamxClientIntegrationTest extends TestCase {
         $url = self::DELIVERY_BASE_URL . '/' . $key;
     
         $startTime = time();
-        while (time() - $startTime < self::TIMEOUT_SECONDS) { // wait for at most 1 second
+        while (time() - $startTime < self::TIMEOUT_SECONDS) {
             $response = @file_get_contents($url);
             if ($response !== false) {
                 $this->assertEquals($response, self::CONTENT);
@@ -101,14 +95,14 @@ class StreamxClientIntegrationTest extends TestCase {
             usleep(100000); // sleep for 100 milliseconds
         }
         
-        $this->fail('404');
+        $this->fail("$url: page not found");
     }
 
     private function assertPageIsUnpublished(string $key) {
         $url = self::DELIVERY_BASE_URL . '/' . $key;
     
         $startTime = time();
-        while (time() - $startTime < self::TIMEOUT_SECONDS) { // wait for at most 1 second
+        while (time() - $startTime < self::TIMEOUT_SECONDS) {
             $response = @file_get_contents($url);
             if (empty($response)) {
                 $this->assertTrue(true);
@@ -117,7 +111,7 @@ class StreamxClientIntegrationTest extends TestCase {
             usleep(100000); // sleep for 100 milliseconds
         }
         
-        $this->fail('202');
+        $this->fail("$url: page exists");
     }
 }
 

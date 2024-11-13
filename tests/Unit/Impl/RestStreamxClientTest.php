@@ -93,7 +93,9 @@ class RestStreamxClientTest extends MockServerTestCase
             '{'.
                 '"key":"key-to-publish",'.
                 '"action":"publish",'.
-                '"eventTime":951,'.
+                '"eventTime":{'.
+                    '"long":951'.
+                '},'.
                 '"properties":{'.
                     '"key-1":"value-1",'.
                     '"key-2":"value-2",'.
@@ -161,7 +163,9 @@ class RestStreamxClientTest extends MockServerTestCase
             '{'.
                 '"key":"key-to-unpublish",'.
                 '"action":"unpublish",'.
-                '"eventTime":951,'.
+                '"eventTime":{'.
+                    '"long":951'.
+                '},'.
                 '"properties":{'.
                     '"key-1":"value-1",'.
                     '"key-2":"value-2",'.
