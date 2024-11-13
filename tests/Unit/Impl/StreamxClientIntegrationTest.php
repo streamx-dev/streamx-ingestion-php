@@ -73,18 +73,19 @@ class StreamxClientIntegrationTest extends TestCase {
 
     /** @test */
     public function shouldPublishMessageObject() {
+        $key = self::MESSAGE_OBJECT_KEY;
         $page = new Page(new Content(self::CONTENT));
-        $message = (Message::newPublishMessage(self::MESSAGE_OBJECT_KEY, $page))->build();
+        $message = (Message::newPublishMessage($key, $page))->build();
         self::$publisher->send($message);
-        $this->assertPageIsPublished(self::MESSAGE_OBJECT_KEY);
+        $this->assertPageIsPublished($key);
     }
 
     /** @test */
     public function shouldUnpublishMessageObjectFromStreamX() {
-        $key = self::PAGE_OBJECT_KEY;
-        $message = (Message::newUnpublishMessage(self::MESSAGE_OBJECT_KEY))->build();
+        $key = self::MESSAGE_OBJECT_KEY;
+        $message = (Message::newUnpublishMessage($key))->build();
         self::$publisher->send($message);
-        $this->assertPageIsUnpublished(self::MESSAGE_OBJECT_KEY);
+        $this->assertPageIsUnpublished($key);
     }
 
     private function assertPageIsPublished(string $key) {
