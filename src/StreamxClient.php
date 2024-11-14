@@ -12,12 +12,14 @@ interface StreamxClient
     /**
      * StreamX REST Ingestion publications path.
      */
-    public const PUBLICATIONS_ENDPOINT_PATH_V1 = '/publications/v1';
+    public const INGESTION_ENDPOINT_PATH_V1 = '/ingestion/v1';
 
     /**
      * Creates new {@link Publisher} instance.
-     * @param string $channel Publications channel name.
+     * @param string $channel Ingestion channel name.
+     * @param string $channelSchemaName Fully qualified name of the Ingestion channel schema.
      * @return Publisher
      */
-    public function newPublisher(string $channel): Publisher;
+    public function newPublisher(string $channel, string $channelSchemaName): Publisher;
+
 }

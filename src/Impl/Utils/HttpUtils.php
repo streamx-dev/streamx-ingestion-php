@@ -9,7 +9,7 @@ use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
 
 final class HttpUtils
 {
-    private const EM_MALFORMED_URI = 'Publication endpoint URI: %s is malformed. %s';
+    private const EM_MALFORMED_URI = 'Ingestion endpoint URI: %s is malformed. %s';
 
     /**
      * @codeCoverageIgnore

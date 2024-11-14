@@ -2,39 +2,57 @@
 
 namespace Streamx\Clients\Ingestion\Impl;
 
+use InvalidArgumentException;
 use Psr\Http\Message\UriInterface;
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
 use Streamx\Clients\Ingestion\Impl\Utils\HttpUtils;
 use Streamx\Clients\Ingestion\Publisher\HttpRequester;
 use Streamx\Clients\Ingestion\Publisher\JsonProvider;
+use Streamx\Clients\Ingestion\Publisher\Message;
 use Streamx\Clients\Ingestion\Publisher\Publisher;
-use Streamx\Clients\Ingestion\Publisher\PublisherSuccessResult;
+use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 
-class RestPublisher implements Publisher
+class RestPublisher extends Publisher
 {
     private array $headers;
+    private UriInterface $messageIngestionEndpointUri;
+    private string $payloadTypeName;
+    private HttpRequester $httpRequester;
+    private JsonProvider $jsonProvider;
 
     public function __construct(
-        private readonly UriInterface $publicationsEndpointUri,
-        private readonly string $channel,
+        UriInterface $ingestionEndpointUri,
+        string $channel,
+        string $channelSchemaName,
         ?string $authToken,
-        private readonly HttpRequester $httpRequester,
-        private readonly JsonProvider $jsonProvider
+        HttpRequester $httpRequester,
+        JsonProvider $jsonProvider
     ) {
         $this->headers = $this->buildHttpHeaders($authToken);
+        $this->messageIngestionEndpointUri = $this->buildMessageIngestionUri($ingestionEndpointUri, $channel);
+        $this->payloadTypeName = $this->convertToPayloadTypeName($channelSchemaName);
+        $this->httpRequester = $httpRequester;
+        $this->jsonProvider = $jsonProvider;
     }
 
-    public function publish(string $key, object|array $data): PublisherSuccessResult
+    private function convertToPayloadTypeName($channelSchemaName): string
     {
-        $json = $this->jsonProvider->getJson($data);
-        $endpointUri = $this->buildPublicationsUri($key);
-        return $this->httpRequester->executePut($endpointUri, $this->headers, $json);
+        $payloadTypeName = preg_replace('/IngestionMessage$/', '', $channelSchemaName);
+        if ($payloadTypeName == $channelSchemaName)
+        {
+            throw new InvalidArgumentException("Expected the provided channel schema name '$channelSchemaName' to end with 'IngestionMessage'");
+        }
+        return $payloadTypeName;
     }
 
-    public function unpublish(string $key): PublisherSuccessResult
+    public function send(Message $message): SuccessResult
     {
-        $endpointUri = $this->buildPublicationsUri($key);
-        return $this->httpRequester->executeDelete($endpointUri, $this->headers);
+        $json = $this->jsonProvider->getJson($message, $this->payloadTypeName);
+        $actualHeaders = $message->action == Message::PUBLISH_ACTION
+            ? array_merge($this->headers, ['Content-Type' => 'application/json; charset=UTF-8'])
+            : $this->headers;
+
+        return $this->httpRequester->executePost($this->messageIngestionEndpointUri, $actualHeaders, $json);
     }
 
     private function buildHttpHeaders(?string $authToken): array
@@ -48,8 +66,8 @@ class RestPublisher implements Publisher
     /**
      * @throws StreamxClientException
      */
-    private function buildPublicationsUri(string $key): UriInterface
+    private function buildMessageIngestionUri(UriInterface $ingestionEndpointUri, string $channel): UriInterface
     {
-        return HttpUtils::buildUri("$this->publicationsEndpointUri/$this->channel/$key");
+        return HttpUtils::buildUri("$ingestionEndpointUri/channels/$channel/messages");
     }
 }

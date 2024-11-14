@@ -2,7 +2,6 @@
 
 namespace Streamx\Clients\Ingestion\Tests\Unit\Impl\Utils;
 
-use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Streamx\Clients\Ingestion\Impl\Utils\DataValidationException;
 use Streamx\Clients\Ingestion\Impl\Utils\DataValidator;
@@ -10,7 +9,7 @@ use Streamx\Clients\Ingestion\Impl\Utils\DataValidator;
 class DataValidatorTest extends TestCase
 {
 
-    #[Test]
+    /** @test */
     public function shouldReturnRequiredProperty()
     {
         $object = json_decode('{"name":"value"}');
@@ -20,7 +19,7 @@ class DataValidatorTest extends TestCase
         $this->assertEquals('value', $value);
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowExceptionWhenRequiredPropertyIsAbsent()
     {
         $object = json_decode('{"not-name":"value"}');
@@ -31,7 +30,7 @@ class DataValidatorTest extends TestCase
         DataValidator::for($object)->require('name');
     }
 
-    #[Test]
+    /** @test */
     public function shouldThrowExceptionWhenRequiredPropertyIsNull()
     {
         $object = json_decode('{"name":null}');

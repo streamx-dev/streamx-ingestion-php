@@ -7,23 +7,39 @@ use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
 /**
  * StreamX publications ingestion endpoint contract. `Publisher` instance is reusable.
  */
-interface Publisher
+abstract class Publisher
 {
 
     /**
      * Performs publications ingestion endpoint `publish` command.
      * @param string $key Publication key.
-     * @param array|object $data Publication data.
-     * @return PublisherSuccessResult
+     * @param array|object $payload Publication payload.
+     * @return SuccessResult containing ingestion endpoint response entity.
      * @throws StreamxClientException if command failed.
      */
-    public function publish(string $key, array|object $data): PublisherSuccessResult;
+    public final function publish(string $key, $payload): SuccessResult
+    {
+        $message = (Message::newPublishMessage($key, $payload))->build();
+        return $this->send($message);
+    }
 
     /**
      * Performs publications ingestion endpoint `unpublish` command.
      * @param string $key Publication key.
-     * @return PublisherSuccessResult
+     * @return SuccessResult containing ingestion endpoint response entity.
      * @throws StreamxClientException if command failed.
      */
-    public function unpublish(string $key): PublisherSuccessResult;
+    public final function unpublish(string $key): SuccessResult
+    {
+        $message = (Message::newUnpublishMessage($key))->build();
+        return $this->send($message);
+    }
+
+    /**
+     * Sends the provided ingestion message to the Ingestion endpoint.
+     * @param object $message Ingestion message.
+     * @return SuccessResult containing ingestion endpoint response entity.
+     * @throws StreamxClientException If command filed.
+     */
+    public abstract function send(Message $message): SuccessResult;
 }

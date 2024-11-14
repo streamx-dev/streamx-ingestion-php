@@ -11,9 +11,10 @@ interface JsonProvider
 {
     /**
      * Generates JSON string from input data.
-     * @param array|object $data Source data for JSON.
+     * @param Message $message Source ingestion message.
+     * @param string $payloadTypeName Fully qualified name of the Message payload.
      * @return string Created JSON.
      * @throws StreamxClientException
      */
-    public function getJson(array|object $data): string;
+    public function getJson(Message $message, string $payloadTypeName): string;
 }

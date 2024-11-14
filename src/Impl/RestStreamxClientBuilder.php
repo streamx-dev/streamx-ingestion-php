@@ -10,19 +10,21 @@ use Streamx\Clients\Ingestion\StreamxClientBuilder;
 
 class RestStreamxClientBuilder implements StreamxClientBuilder
 {
-    private ?string $publicationsEndpointUri = null;
+    private string $serverUrl;
+    private ?string $ingestionEndpointUri = null;
     private ?string $authToken = null;
     private ?HttpRequester $httpRequester = null;
     private ?ClientInterface $httpClient = null;
     private ?JsonProvider $jsonProvider = null;
 
-    public function __construct(private readonly string $serverUrl)
+    public function __construct(string $serverUrl)
     {
+        $this->serverUrl = $serverUrl;
     }
 
-    public function setPublicationsEndpointUri(string $publicationsEndpointUri
-    ): StreamxClientBuilder {
-        $this->publicationsEndpointUri = $publicationsEndpointUri;
+    public function setIngestionEndpointUri(string $ingestionEndpointUri): StreamxClientBuilder
+    {
+        $this->ingestionEndpointUri = $ingestionEndpointUri;
         return $this;
     }
 
@@ -52,17 +54,17 @@ class RestStreamxClientBuilder implements StreamxClientBuilder
 
     public function build(): StreamxClient
     {
-        $this->ensurePublicationsEndpointUri();
+        $this->ensureIngestionEndpointUri();
         $this->ensureHttpRequester();
         $this->ensureJsonProvider();
-        return new RestStreamxClient($this->serverUrl, $this->publicationsEndpointUri,
+        return new RestStreamxClient($this->serverUrl, $this->ingestionEndpointUri,
             $this->authToken, $this->httpRequester, $this->jsonProvider);
     }
 
-    private function ensurePublicationsEndpointUri(): void
+    private function ensureIngestionEndpointUri(): void
     {
-        if ($this->publicationsEndpointUri == null) {
-            $this->publicationsEndpointUri = StreamxClient::PUBLICATIONS_ENDPOINT_PATH_V1;
+        if ($this->ingestionEndpointUri == null) {
+            $this->ingestionEndpointUri = StreamxClient::INGESTION_ENDPOINT_PATH_V1;
         }
     }
 

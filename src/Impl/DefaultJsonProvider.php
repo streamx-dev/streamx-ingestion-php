@@ -4,17 +4,28 @@ namespace Streamx\Clients\Ingestion\Impl;
 
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
 use Streamx\Clients\Ingestion\Publisher\JsonProvider;
+use Streamx\Clients\Ingestion\Publisher\Message;
 
 class DefaultJsonProvider implements JsonProvider
 {
 
-    public function getJson(array|object $data): string
+    public function getJson(Message $message, string $payloadTypeName): string
     {
-        $json = json_encode($data);
+        $this->wrapPayloadWithTypeName($message, $payloadTypeName);
+
+        $messageAsJson = json_encode($message);
         if (json_last_error() == JSON_ERROR_NONE) {
-            return $json;
-        } else {
-            throw new StreamxClientException('JSON encoding error: ' . json_last_error_msg());
+            return $messageAsJson;
+        }
+        throw new StreamxClientException('JSON encoding error: ' . json_last_error_msg());
+    }
+
+    private function wrapPayloadWithTypeName(Message $message, string $payloadTypeName): void
+    {
+        $payload = $message->payload;
+        if ($payload != null) {
+            $payload = array($payloadTypeName => $payload);
+            $message->payload = $payload;
         }
     }
 }

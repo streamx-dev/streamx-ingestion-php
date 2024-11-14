@@ -2,19 +2,22 @@
 
 namespace Streamx\Clients\Ingestion\Tests\Testing\Impl;
 
-use Streamx\Clients\Ingestion\Publisher\JsonProvider;
+use Streamx\Clients\Ingestion\Impl\DefaultJsonProvider;
+use Streamx\Clients\Ingestion\Publisher\Message;
 
-class CustomTestJsonProvider implements JsonProvider
+class CustomTestJsonProvider extends DefaultJsonProvider
 {
+    
+    private string $customFieldValue;
 
-    public function __construct(private readonly string $customFieldValue)
+    public function __construct(string $customFieldValue)
     {
+        $this->customFieldValue = $customFieldValue;
     }
 
-    public function getJson(object|array $data): string
+    public function getJson(Message $message, string $payloadTypeName): string
     {
-        $data = (array)$data;
-        $data['customProperty'] = $this->customFieldValue;
-        return json_encode($data);
+        $message->payload['customProperty'] = $this->customFieldValue;
+        return parent::getJson($message, $payloadTypeName);
     }
 }

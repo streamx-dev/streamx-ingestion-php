@@ -9,46 +9,33 @@ use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
+use Streamx\Clients\Ingestion\Exceptions\StreamxClientExceptionFactory;
 use Streamx\Clients\Ingestion\Impl\Utils\DataValidationException;
 use Streamx\Clients\Ingestion\Publisher\HttpRequester;
-use Streamx\Clients\Ingestion\Publisher\PublisherSuccessResult;
+use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 
 class GuzzleHttpRequester implements HttpRequester
 {
 
-    public function __construct(
-        private readonly ClientInterface $httpClient = new GuzzleHttpClient()
-    ) {
+    private ClientInterface $httpClient;
+
+    public function __construct(?ClientInterface $httpClient = null)
+    {
+        $this->httpClient = $httpClient ?? new GuzzleHttpClient();
     }
 
-    public function executePut(
+    public function executePost(
         UriInterface $endpointUri,
         array $headers,
         string $json
-    ): PublisherSuccessResult {
+    ): SuccessResult {
         try {
-            $actualHeaders = ['Content-Type' => 'application/json; charset=UTF-8'];
-            $actualHeaders = array_merge($actualHeaders, $headers);
-            $request = new Request('PUT', $endpointUri, $actualHeaders, $json);
+            $request = new Request('POST', $endpointUri, $headers, $json);
             $response = $this->httpClient->sendRequest($request);
             return $this->handleResponse($response);
         } catch (ClientExceptionInterface $e) {
             throw new StreamxClientException(
-                sprintf('PUT request with URI: %s failed due to HTTP client error', $endpointUri),
-                $e);
-        }
-    }
-
-    public function executeDelete(UriInterface $endpointUri, array $headers): PublisherSuccessResult
-    {
-        try {
-            $request = new Request('DELETE', $endpointUri, $headers);
-            $response = $this->httpClient->sendRequest($request);
-            return $this->handleResponse($response);
-        } catch (ClientExceptionInterface $e) {
-            throw new StreamxClientException(
-                sprintf('DELETE request with URI: %s failed due to HTTP client error',
-                    $endpointUri),
+                sprintf('POST request with URI: %s failed due to HTTP client error', $endpointUri),
                 $e);
         }
     }
@@ -56,36 +43,40 @@ class GuzzleHttpRequester implements HttpRequester
     /**
      * @throws StreamxClientException
      */
-    private function handleResponse(ResponseInterface $response): PublisherSuccessResult
+    private function handleResponse(ResponseInterface $response): SuccessResult
     {
         $statusCode = $response->getStatusCode();
-        switch ($statusCode) {
-            case 202:
-                return $this->parseSuccessResponse($response);
-            case 400:
-            case 500:
-                $failureResponse = $this->parseFailureResponse($response);
-                throw new StreamxClientException(
-                    sprintf('Publication Ingestion REST endpoint known error. Code: %s. Message: %s',
-                        $failureResponse->getErrorCode(),
-                        $failureResponse->getErrorMessage()));
-            case 401:
-                throw new StreamxClientException('Authentication failed. Make sure that the given token is valid.');
-            default:
-                throw new StreamxClientException(
-                    sprintf('Communication error. Response status: %s. Message: %s',
-                        $statusCode,
-                        $response->getReasonPhrase()));
+
+        if ($statusCode == 202) {
+            $messageStatus = $this->parseMessageStatus($response);
+            if ($messageStatus->getSuccess() != null) {
+                return $messageStatus->getSuccess();
+            }
+            throw $this->streamxClientExceptionFrom($messageStatus->getFailure());
         }
+
+        if ($statusCode == 401) {
+            throw new StreamxClientException('Authentication failed. Make sure that the given token is valid.');
+        }
+
+        if (in_array($statusCode, [400, 403, 500])) {
+            $failureResponse = $this->parseFailureResponse($response);
+            throw $this->streamxClientExceptionFrom($failureResponse);
+        }
+
+        throw new StreamxClientException(
+            sprintf('Communication error. Response status: %s. Message: %s',
+                $statusCode,
+                $response->getReasonPhrase()));
     }
 
     /**
      * @throws StreamxClientException
      */
-    private function parseSuccessResponse(ResponseInterface $response): PublisherSuccessResult
+    private function parseMessageStatus(ResponseInterface $response): MessageStatus
     {
-        return $this->parseResponse($response,
-            fn($json) => PublisherSuccessResultDeserializer::fromJson($json));
+        $jsonObject = $this->parseResponseToJson($response);
+        return MessageStatus::fromJson($jsonObject);
     }
 
     /**
@@ -93,17 +84,9 @@ class GuzzleHttpRequester implements HttpRequester
      */
     private function parseFailureResponse(ResponseInterface $response): FailureResponse
     {
-        return $this->parseResponse($response, fn($json) => FailureResponse::fromJson($json));
-    }
-
-    /**
-     * @throws StreamxClientException
-     */
-    private function parseResponse(ResponseInterface $response, callable $jsonToObjectMapper): mixed
-    {
         try {
             $jsonObject = $this->parseResponseToJson($response);
-            return $jsonToObjectMapper($jsonObject);
+            return FailureResponse::fromJson($jsonObject);
         } catch (DataValidationException $e) {
             throw new StreamxClientException(sprintf('Communication error. Response status: %s. Message: %s',
                 $response->getStatusCode(), $e->getMessage()));
@@ -113,7 +96,7 @@ class GuzzleHttpRequester implements HttpRequester
     /**
      * @throws StreamxClientException
      */
-    private function parseResponseToJson(ResponseInterface $response): mixed
+    private function parseResponseToJson(ResponseInterface $response)
     {
         $jsonString = (string)$response->getBody();
         $jsonObject = json_decode($jsonString);
@@ -122,5 +105,13 @@ class GuzzleHttpRequester implements HttpRequester
                 $response->getStatusCode(), 'Response could not be parsed.'));
         }
         return $jsonObject;
+    }
+
+    private function streamxClientExceptionFrom(FailureResponse $failureResponse): StreamxClientException
+    {
+        return StreamxClientExceptionFactory::create(
+            $failureResponse->getErrorCode(),
+            $failureResponse->getErrorMessage()
+        );
     }
 }

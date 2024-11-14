@@ -11,28 +11,16 @@ use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
 interface HttpRequester
 {
     /**
-     * Performs PUT request.
+     * Performs POST request.
      * @param UriInterface $endpointUri Request target URI.
      * @param array $headers Request headers.
      * @param string $json Request JSON.
-     * @return PublisherSuccessResult
+     * @return SuccessResult
      * @throws StreamxClientException if request failed.
      */
-    public function executePut(
+    public function executePost(
         UriInterface $endpointUri,
         array $headers,
         string $json
-    ): PublisherSuccessResult;
-
-    /**
-     * Performs DELETE request.
-     * @param UriInterface $endpointUri Request target URI.
-     * @param array $headers Request headers.
-     * @return PublisherSuccessResult
-     * @throws StreamxClientException if request failed.
-     */
-    public function executeDelete(
-        UriInterface $endpointUri,
-        array $headers
-    ): PublisherSuccessResult;
+    ): SuccessResult;
 }
