@@ -2,8 +2,6 @@
 
 namespace Streamx\Clients\Ingestion\Exceptions;
 
-use Exception;
-
 /**
  * Thrown when client failed command handling due to forbidden channel in the request.
  */

@@ -36,7 +36,6 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
         // Then
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
             '/custom-ingestion/v2/channels/pages/messages',
-            $key,
             $this->defaultPublishMessageJson($key, '{"message":"test"}'));
 
         $this->assertEquals(836383, $result->getEventTime());
@@ -63,7 +62,6 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
         // Then
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
             '/custom-requester-ingestion/v1/channels/pages/messages',
-            $key,
             $this->defaultPublishMessageJson($key, '{"message":"custom requester"}'));
 
         $this->assertEquals(937493, $result->getEventTime());
@@ -113,7 +111,6 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
         // Then
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
-            $key,
             $this->defaultPublishMessageJson($key, '{"message":"custom http client"}'),
             ['X-StreamX' => 'Custom http client']);
 
@@ -141,7 +138,6 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
         // Then
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
-            'key',
             $this->defaultPublishMessageJson($key, '{"property":"original","customProperty":"Added by custom Json Provider"}'));
 
         $this->assertEquals(625436, $result->getEventTime());

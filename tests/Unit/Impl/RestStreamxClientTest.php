@@ -37,7 +37,6 @@ class RestStreamxClientTest extends MockServerTestCase
         // Then
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
-            $key,
             $this->defaultPublishMessageJson($key,
                 '{"data":{"name":"Data name","description":"Data description"},' .
                 '"property":"<div style=\"margin:20px;\">Data property<\/div>{\"key\":\"value\"}"}'));
@@ -61,7 +60,6 @@ class RestStreamxClientTest extends MockServerTestCase
         // Then
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
-            $key,
             $this->defaultPublishMessageJson($key, '{"content":{"bytes":"Text"}}'));
 
         $this->assertSuccessResult($result, 100232, $key);
@@ -89,7 +87,6 @@ class RestStreamxClientTest extends MockServerTestCase
         // Then
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
-            $key,
             '{'.
                 '"key":"key-to-publish",'.
                 '"action":"publish",'.
@@ -131,7 +128,6 @@ class RestStreamxClientTest extends MockServerTestCase
         // Then
         $this->assertUnpublishPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
-            $key,
             $this->defaultUnpublishMessageJson($key),
         );
 
@@ -159,7 +155,6 @@ class RestStreamxClientTest extends MockServerTestCase
         // Then
         $this->assertUnpublishPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
-            $key,
             '{'.
                 '"key":"key-to-unpublish",'.
                 '"action":"unpublish",'.
@@ -203,7 +198,6 @@ class RestStreamxClientTest extends MockServerTestCase
         // Then
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
-            $key,
             $this->defaultPublishMessageJson($key, '{"name":"name","description":"content"}'));
 
         $this->assertSuccessResult($result, 123456, $key);
@@ -233,13 +227,11 @@ class RestStreamxClientTest extends MockServerTestCase
         // Then
         $this->assertPublishPostRequest(self::$server->getRequestByOffset($this::LAST_REQUEST_OFFSET - 1),
             '/ingestion/v1/channels/pages/messages',
-            $publishKey,
             $this->defaultPublishMessageJson($publishKey, '{"name":"Test name","description":null}'),
             ['Authorization' => 'Bearer abc-100']);
 
         $this->assertUnpublishPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
-            $unpublishKey,
             $this->defaultUnpublishMessageJson($unpublishKey),
             ['Authorization' => 'Bearer abc-100']);
     }
@@ -260,7 +252,6 @@ class RestStreamxClientTest extends MockServerTestCase
         // Then
         $this->assertPublishPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
-            $key,
             $this->defaultPublishMessageJson($key, '{"message":"\u00a1Hola, \ud83c\udf0d!"}'));
 
         $this->assertSuccessResult($result, 100298, $key);

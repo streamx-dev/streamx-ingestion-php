@@ -2,8 +2,6 @@
 
 namespace Streamx\Clients\Ingestion\Exceptions;
 
-use Exception;
-
 abstract class StreamxClientExceptionFactory
 {
 
