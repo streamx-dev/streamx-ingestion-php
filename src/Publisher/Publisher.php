@@ -37,7 +37,7 @@ abstract class Publisher
 
     /**
      * Sends the provided ingestion message to the Ingestion endpoint.
-     * @param object $message Ingestion message.
+     * @param Message $message Ingestion message.
      * @return SuccessResult containing ingestion endpoint response entity.
      * @throws StreamxClientException If command filed.
      */

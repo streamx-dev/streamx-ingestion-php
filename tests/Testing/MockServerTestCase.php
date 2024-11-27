@@ -59,7 +59,6 @@ class MockServerTestCase extends TestCase
     protected function assertPublishPostRequest(
         RequestInfo $request,
         string $uri,
-        string $key,
         string $expectedBody,
         array $headers = null
     ): void {
@@ -70,7 +69,6 @@ class MockServerTestCase extends TestCase
     protected function assertUnpublishPostRequest(
         RequestInfo $request,
         string $uri,
-        string $key,
         string $expectedBody,
         array $headers = null
     ): void {

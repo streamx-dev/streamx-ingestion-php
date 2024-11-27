@@ -6,3 +6,4 @@ composer.phar
 # composer.lock
 /target/
 /.phpunit.result.cache
+.idea
