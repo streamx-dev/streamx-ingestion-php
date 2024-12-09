@@ -24,7 +24,7 @@ class CustomTestHttpRequester implements HttpRequester
         UriInterface $endpointUri,
         array $headers,
         string $json
-    ): SuccessResult {
+    ): array {
         $endpointUri = $this->modifyUri($endpointUri);
         return $this->httpRequester->executePost($endpointUri, $headers, $json);
     }

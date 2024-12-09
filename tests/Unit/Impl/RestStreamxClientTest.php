@@ -12,7 +12,9 @@ use Streamx\Clients\Ingestion\Exceptions\ServerErrorException;
 use Streamx\Clients\Ingestion\Exceptions\ServiceFailureException;
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
 use Streamx\Clients\Ingestion\Exceptions\UnsupportedChannelException;
+use Streamx\Clients\Ingestion\Impl\FailureResponse;
 use Streamx\Clients\Ingestion\Publisher\Message;
+use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 use Streamx\Clients\Ingestion\Tests\Testing\MockServerTestCase;
 use Streamx\Clients\Ingestion\Tests\Testing\StreamxResponse;
 
@@ -35,7 +37,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $result = $this->createPagesPublisher()->publish($key, $data);
 
         // Then
-        $this->assertPublishPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             $this->defaultPublishMessageJson($key,
                 '{"data":{"name":"Data name","description":"Data description"},' .
@@ -58,7 +60,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $result = $this->createPagesPublisher()->publish($key, $data);
 
         // Then
-        $this->assertPublishPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             $this->defaultPublishMessageJson($key, '{"content":{"bytes":"Text"}}'));
 
@@ -85,7 +87,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $result = $this->createPagesPublisher()->send($message);
 
         // Then
-        $this->assertPublishPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             '{'.
                 '"key":"key-to-publish",'.
@@ -126,7 +128,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $result = $this->createPagesPublisher()->unpublish($key);
 
         // Then
-        $this->assertUnpublishPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             $this->defaultUnpublishMessageJson($key),
         );
@@ -146,14 +148,14 @@ class RestStreamxClientTest extends MockServerTestCase
             ->withProperty('key-4', 'value-4')
             ->build();
 
-            self::$server->setResponseOfPath('/ingestion/v1/channels/pages/messages',
+        self::$server->setResponseOfPath('/ingestion/v1/channels/pages/messages',
             StreamxResponse::success(100205, $key));
 
         // When
         $result = $this->createPagesPublisher()->send($message);
 
         // Then
-        $this->assertUnpublishPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             '{'.
                 '"key":"key-to-unpublish",'.
@@ -196,7 +198,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $result = $this->createPagesPublisher()->send($message);
 
         // Then
-        $this->assertPublishPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             $this->defaultPublishMessageJson($key, '{"name":"name","description":"content"}'));
 
@@ -225,12 +227,12 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->createPagesPublisher()->unpublish($unpublishKey);
 
         // Then
-        $this->assertPublishPostRequest(self::$server->getRequestByOffset($this::LAST_REQUEST_OFFSET - 1),
+        $this->assertIngestionPostRequest(self::$server->getRequestByOffset($this::LAST_REQUEST_OFFSET - 1),
             '/ingestion/v1/channels/pages/messages',
             $this->defaultPublishMessageJson($publishKey, '{"name":"Test name","description":null}'),
             ['Authorization' => 'Bearer abc-100']);
 
-        $this->assertUnpublishPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             $this->defaultUnpublishMessageJson($unpublishKey),
             ['Authorization' => 'Bearer abc-100']);
@@ -250,7 +252,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $result = $this->createPagesPublisher()->publish($key, $data);
 
         // Then
-        $this->assertPublishPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             $this->defaultPublishMessageJson($key, '{"message":"\u00a1Hola, \ud83c\udf0d!"}'));
 
@@ -448,6 +450,40 @@ class RestStreamxClientTest extends MockServerTestCase
 
         // When
         $this->createPublisherWithIrrelevantSchema("errors")->publish("key", $data);
+    }
+
+    /** @test */
+    public function shouldHandleMultiMessageRequestsAndResponses()
+    {
+        // Given
+        $inputMessages = [
+            Message::newPublishMessage('key-1', new Data('Data 1'))->build(),
+            Message::newUnpublishMessage('key-2')->build(),
+            Message::newPublishMessage('key-3', new Data('Data 3'))->build(),
+            Message::newUnpublishMessage('key-4')->build(),
+            Message::newPublishMessage('key-5', new Data('Data 5'))->build()
+        ];
+
+        $messageResponses = [
+            new FailureResponse('SOME_ERROR_CODE', 'Something happened'),
+            new SuccessResult(123, 'key-2'),
+            new SuccessResult(345, 'key-3'),
+            new FailureResponse('SOME_OTHER_ERROR_CODE', 'Something bad happened'),
+            new SuccessResult(567, 'key-5'),
+        ];
+
+        self::$server->setResponseOfPath('/ingestion/v1/channels/pages/messages',
+            StreamxResponse::responseForMultipleMessages($messageResponses));
+
+        // When
+        $result = $this->createPagesPublisher()->sendMulti($inputMessages);
+
+        // Then
+        $this->assertEquals($messageResponses[0], $result[0]->getFailure());
+        $this->assertEquals($messageResponses[1], $result[1]->getSuccess());
+        $this->assertEquals($messageResponses[2], $result[2]->getSuccess());
+        $this->assertEquals($messageResponses[3], $result[3]->getFailure());
+        $this->assertEquals($messageResponses[4], $result[4]->getSuccess());
     }
 
     /** @test */
