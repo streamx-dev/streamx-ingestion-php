@@ -42,4 +42,12 @@ abstract class Publisher
      * @throws StreamxClientException If command filed.
      */
     public abstract function send(Message $message): SuccessResult;
+
+    /**
+     * Sends the provided json that contains multiple ingestion messages (separated by newline character) to the Ingestion endpoint.
+     * @param string $json Composite ingestion message containing one or more single messages.
+     * @return SuccessResult containing ingestion endpoint response entity.
+     * @throws StreamxClientException If command filed.
+     */
+    public abstract function sendMulti(string $json): SuccessResult;
 }

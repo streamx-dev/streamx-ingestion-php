@@ -30,12 +30,12 @@ class RestPublisher extends Publisher
     ) {
         $this->headers = $this->buildHttpHeaders($authToken);
         $this->messageIngestionEndpointUri = $this->buildMessageIngestionUri($ingestionEndpointUri, $channel);
-        $this->payloadTypeName = $this->convertToPayloadTypeName($channelSchemaName);
+        $this->payloadTypeName = self::convertToPayloadTypeName($channelSchemaName);
         $this->httpRequester = $httpRequester;
         $this->jsonProvider = $jsonProvider;
     }
 
-    private function convertToPayloadTypeName($channelSchemaName): string
+    public static function convertToPayloadTypeName($channelSchemaName): string
     {
         $payloadTypeName = preg_replace('/IngestionMessage$/', '', $channelSchemaName);
         if ($payloadTypeName == $channelSchemaName)
@@ -52,6 +52,12 @@ class RestPublisher extends Publisher
             ? array_merge($this->headers, ['Content-Type' => 'application/json; charset=UTF-8'])
             : $this->headers;
 
+        return $this->httpRequester->executePost($this->messageIngestionEndpointUri, $actualHeaders, $json);
+    }
+
+    public function sendMulti(string $json): SuccessResult
+    {
+        $actualHeaders = array_merge($this->headers, ['Content-Type' => 'application/json; charset=UTF-8']);
         return $this->httpRequester->executePost($this->messageIngestionEndpointUri, $actualHeaders, $json);
     }
 

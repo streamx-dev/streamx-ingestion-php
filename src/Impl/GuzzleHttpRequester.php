@@ -48,11 +48,13 @@ class GuzzleHttpRequester implements HttpRequester
         $statusCode = $response->getStatusCode();
 
         if ($statusCode == 202) {
-            $messageStatus = $this->parseMessageStatus($response);
-            if ($messageStatus->getSuccess() != null) {
-                return $messageStatus->getSuccess();
+            $messageStatuses = $this->parseMessageStatuses($response);
+            foreach ($messageStatuses as $messageStatus) {
+                if ($messageStatus->getFailure() != null) {
+                    throw $this->streamxClientExceptionFrom($messageStatus->getFailure()); // TODO: handle collecting all failures into this response exception
+                }
             }
-            throw $this->streamxClientExceptionFrom($messageStatus->getFailure());
+            return $messageStatuses[0]->getSuccess(); // TODO: handle returning list of statuses, not just the first success
         }
 
         if ($statusCode == 401) {
@@ -71,12 +73,19 @@ class GuzzleHttpRequester implements HttpRequester
     }
 
     /**
+     * @return MessageStatus[] array
      * @throws StreamxClientException
      */
-    private function parseMessageStatus(ResponseInterface $response): MessageStatus
+    private function parseMessageStatuses(ResponseInterface $response): array
     {
-        $jsonObject = $this->parseResponseToJson($response);
-        return MessageStatus::fromJson($jsonObject);
+        $jsonObjects = $this->parseResponseToJsons($response);
+        $messageStatuses = [];
+
+        foreach ($jsonObjects as $jsonObject) {
+            $messageStatuses[] = MessageStatus::fromJson($jsonObject);
+        }
+
+        return $messageStatuses;
     }
 
     /**
@@ -85,8 +94,12 @@ class GuzzleHttpRequester implements HttpRequester
     private function parseFailureResponse(ResponseInterface $response): FailureResponse
     {
         try {
-            $jsonObject = $this->parseResponseToJson($response);
-            return FailureResponse::fromJson($jsonObject);
+            $jsonObjects = $this->parseResponseToJsons($response);
+            $jsonObjectsCount = count($jsonObjects);
+            if ($jsonObjectsCount !== 1) {
+                throw new StreamxClientException('Expected a single failure response. Got: ' . $jsonObjectsCount);
+            }
+            return FailureResponse::fromJson($jsonObjects[0]);
         } catch (DataValidationException $e) {
             throw new StreamxClientException(sprintf('Communication error. Response status: %s. Message: %s',
                 $response->getStatusCode(), $e->getMessage()));
@@ -96,15 +109,23 @@ class GuzzleHttpRequester implements HttpRequester
     /**
      * @throws StreamxClientException
      */
-    private function parseResponseToJson(ResponseInterface $response)
+    private function parseResponseToJsons(ResponseInterface $response)
     {
-        $jsonString = (string)$response->getBody();
-        $jsonObject = json_decode($jsonString);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new StreamxClientException(sprintf('Communication error. Response status: %s. Message: %s',
-                $response->getStatusCode(), 'Response could not be parsed.'));
+        $compositeResponseJson = (string)$response->getBody();
+        $singleResponseJsons = explode("\n", $compositeResponseJson); // TODO assuming the only newline characters possible in response, is the one that separates multiple MessageStatus jsons
+
+        $jsonObjects = [];
+        foreach ($singleResponseJsons as $singleResponseJson) {
+            if (empty($singleResponseJson)) {
+                continue;
+            }
+            $jsonObjects[] = json_decode($singleResponseJson);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new StreamxClientException(sprintf('Communication error. Response status: %s. Message: %s',
+                    $response->getStatusCode(), 'Response could not be parsed.'));
+            }
         }
-        return $jsonObject;
+        return $jsonObjects;
     }
 
     private function streamxClientExceptionFrom(FailureResponse $failureResponse): StreamxClientException

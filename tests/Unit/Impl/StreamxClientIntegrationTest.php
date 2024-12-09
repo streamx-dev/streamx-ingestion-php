@@ -3,6 +3,8 @@
 namespace Streamx\Clients\Ingestion\Tests\Unit\Impl;
 
 use PHPUnit\Framework\TestCase;
+use Streamx\Clients\Ingestion\Impl\DefaultJsonProvider;
+use Streamx\Clients\Ingestion\Impl\RestPublisher;
 use Streamx\Clients\Ingestion\StreamXClient;
 use Streamx\Clients\Ingestion\Builders\StreamxClientBuilders;
 use Streamx\Clients\Ingestion\Publisher\Message;
@@ -30,6 +32,7 @@ class StreamxClientIntegrationTest extends TestCase {
     private const DATA_ARRAY_KEY = "data-array-key";
     private const MESSAGE_OBJECT_KEY = "message-object-key";
     private const MESSAGE_OBJECT_WITH_DATA_ARRAY_KEY = "message-object-with-data-array-key";
+    private const MULTIMESSAGE_DATA_OBJECT_KEY = "multimessage-data-object-key";
 
     private const CONTENT = "test content from php client";
     private const TIMEOUT_SECONDS = 3;
@@ -97,6 +100,56 @@ class StreamxClientIntegrationTest extends TestCase {
         $message = (Message::newUnpublishMessage($key))->build();
         self::$publisher->send($message);
         $this->assertDataIsUnpublished($key);
+    }
+
+    //** @test */
+    public function shouldPublishAndUnpublishMultiMessageRequest() {
+        $keys = [];
+        for ($i = 0; $i < 10; $i++) {
+            $keys[] = self::MULTIMESSAGE_DATA_OBJECT_KEY . "_$i";
+        }
+
+        $this->verifyMultiMessagePublish($keys);
+        $this->verifyMultiMessageUnpublish($keys);
+    }
+
+    private function verifyMultiMessagePublish(array $keys) {
+        $jsonFormatter = new DefaultJsonProvider();
+        $payloadTypeName = RestPublisher::convertToPayloadTypeName(self::DATA_SCHEMA_NAME);
+
+        // given
+        $singlePublishJsons = [];
+        foreach ($keys as $key) {
+            $publishMessage = Message::newPublishMessage($key, self::$dataArray)->build();
+            $singlePublishJsons[] = $jsonFormatter->getJson($publishMessage, $payloadTypeName);
+        }
+        $multiPublishJson = implode("\n", $singlePublishJsons);
+
+        // when
+        self::$publisher->sendMulti($multiPublishJson);
+
+        // then
+        foreach ($keys as $key) {
+            $this->assertDataIsPublished($key);
+        }
+    }
+
+    private function verifyMultiMessageUnpublish(array $keys) {
+        // given
+        $singleUnpublishJsons = [];
+        foreach ($keys as $key) {
+            $unpublishMessage = Message::newUnpublishMessage($key)->build();
+            $singleUnpublishJsons[] = json_encode($unpublishMessage, JSON_PRETTY_PRINT);
+        }
+        $multiUnpublishJson = implode("\n", $singleUnpublishJsons);
+
+        // when
+        self::$publisher->sendMulti($multiUnpublishJson);
+
+        // then
+        foreach ($keys as $key) {
+            $this->assertDataIsUnpublished($key);
+        }
     }
 
     private function assertDataIsPublished(string $key) {
