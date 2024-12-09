@@ -56,27 +56,7 @@ class MockServerTestCase extends TestCase
         return '{"key":"'.$key.'","action":"unpublish","eventTime":null,"properties":{},"payload":null}';
     }
 
-    protected function assertPublishPostRequest(
-        RequestInfo $request,
-        string $uri,
-        string $expectedBody,
-        array $headers = null
-    ): void {
-        $this->assertIngestionPostRequest($request, $uri, $expectedBody, $headers);
-        $this->assertEquals('application/json; charset=UTF-8', $request->getHeaders()['Content-Type']);
-    }
-
-    protected function assertUnpublishPostRequest(
-        RequestInfo $request,
-        string $uri,
-        string $expectedBody,
-        array $headers = null
-    ): void {
-        $this->assertIngestionPostRequest($request, $uri, $expectedBody, $headers);
-        $this->assertArrayNotHasKey('Content-Type', $request->getHeaders());
-    }
-
-    private function assertIngestionPostRequest(
+    protected function assertIngestionPostRequest(
         RequestInfo $request,
         string $uri,
         string $expectedBody,
@@ -85,6 +65,7 @@ class MockServerTestCase extends TestCase
         $this->assertEquals('POST', $request->getRequestMethod());
         $this->assertEquals($uri, $request->getRequestUri());
         $this->assertEquals($expectedBody, $request->getInput());
+        $this->assertEquals('application/json; charset=UTF-8', $request->getHeaders()['Content-Type']);
         $this->assertHeaders($request, $headers);
     }
 

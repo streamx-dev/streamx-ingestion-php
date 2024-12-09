@@ -14,7 +14,7 @@ class StreamxResponse
         $successResult = new SuccessResult($eventTime, $key);
         $messageStatus = MessageStatus::ofSuccess($successResult);
         $json = json_encode($messageStatus);
-        return new Response($json, [], 202);
+        return self::create202Response($json);
     }
 
     public static function failure(int $statusCode, string $errorCode, string $errorMessage): Response
@@ -29,11 +29,32 @@ class StreamxResponse
         $failureResponse = new FailureResponse($errorCode, $errorMessage);
         $messageStatus = MessageStatus::ofFailure($failureResponse);
         $json = json_encode($messageStatus);
-        return new Response($json, [], 202);
+        return self::create202Response($json);
+    }
+
+    /**
+     * @param $messageResponses array of SuccessResult and/or FailureResponse $messageResponses
+     */
+    public static function responseForMultipleMessages(array $messageResponses): Response
+    {
+        $jsons = [];
+        foreach ($messageResponses as $messageResponse) {
+            if ($messageResponse instanceof SuccessResult) {
+                $jsons[] = json_encode(MessageStatus::ofSuccess($messageResponse));
+            } else if ($messageResponse instanceof FailureResponse) {
+                $jsons[] = json_encode(MessageStatus::ofFailure($messageResponse));
+            }
+        }
+        return self::create202Response(implode("\n", $jsons));
     }
 
     public static function custom(int $statusCode, string $body, array $headers = []): Response
     {
         return new Response($body, $headers, $statusCode);
+    }
+
+    public static function create202Response($body): Response
+    {
+        return self::custom(202, $body);
     }
 }
