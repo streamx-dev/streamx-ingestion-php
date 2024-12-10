@@ -2,7 +2,7 @@
 
 namespace Streamx\Clients\Ingestion\Tests\Testing\Model;
 
-class Page
+class Data
 {
     public Content $content;
 

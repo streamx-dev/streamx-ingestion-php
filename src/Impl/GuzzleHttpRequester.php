@@ -12,7 +12,6 @@ use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientExceptionFactory;
 use Streamx\Clients\Ingestion\Impl\Utils\DataValidationException;
 use Streamx\Clients\Ingestion\Publisher\HttpRequester;
-use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 
 class GuzzleHttpRequester implements HttpRequester
 {
@@ -28,7 +27,7 @@ class GuzzleHttpRequester implements HttpRequester
         UriInterface $endpointUri,
         array $headers,
         string $json
-    ): SuccessResult {
+    ): array {
         try {
             $request = new Request('POST', $endpointUri, $headers, $json);
             $response = $this->httpClient->sendRequest($request);
@@ -41,18 +40,15 @@ class GuzzleHttpRequester implements HttpRequester
     }
 
     /**
+     * @return MessageStatus[]
      * @throws StreamxClientException
      */
-    private function handleResponse(ResponseInterface $response): SuccessResult
+    private function handleResponse(ResponseInterface $response): array
     {
         $statusCode = $response->getStatusCode();
 
         if ($statusCode == 202) {
-            $messageStatus = $this->parseMessageStatus($response);
-            if ($messageStatus->getSuccess() != null) {
-                return $messageStatus->getSuccess();
-            }
-            throw $this->streamxClientExceptionFrom($messageStatus->getFailure());
+            return $this->parseMessageStatuses($response);
         }
 
         if ($statusCode == 401) {
@@ -71,12 +67,19 @@ class GuzzleHttpRequester implements HttpRequester
     }
 
     /**
+     * @return MessageStatus[] array
      * @throws StreamxClientException
      */
-    private function parseMessageStatus(ResponseInterface $response): MessageStatus
+    private function parseMessageStatuses(ResponseInterface $response): array
     {
-        $jsonObject = $this->parseResponseToJson($response);
-        return MessageStatus::fromJson($jsonObject);
+        $jsonObjects = $this->parseResponseToJsonObjects($response);
+        $messageStatuses = [];
+
+        foreach ($jsonObjects as $jsonObject) {
+            $messageStatuses[] = MessageStatus::fromJson($jsonObject);
+        }
+
+        return $messageStatuses;
     }
 
     /**
@@ -85,7 +88,8 @@ class GuzzleHttpRequester implements HttpRequester
     private function parseFailureResponse(ResponseInterface $response): FailureResponse
     {
         try {
-            $jsonObject = $this->parseResponseToJson($response);
+            $jsonString = (string)$response->getBody();
+            $jsonObject = $this->parseToJsonObject($jsonString, $response);
             return FailureResponse::fromJson($jsonObject);
         } catch (DataValidationException $e) {
             throw new StreamxClientException(sprintf('Communication error. Response status: %s. Message: %s',
@@ -96,15 +100,41 @@ class GuzzleHttpRequester implements HttpRequester
     /**
      * @throws StreamxClientException
      */
-    private function parseResponseToJson(ResponseInterface $response)
+    private function parseResponseToJsonObjects(ResponseInterface $response): array
     {
-        $jsonString = (string)$response->getBody();
-        $jsonObject = json_decode($jsonString);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new StreamxClientException(sprintf('Communication error. Response status: %s. Message: %s',
-                $response->getStatusCode(), 'Response could not be parsed.'));
+        $singleResponseJsons = self::splitToSingleJsons((string)$response->getBody());
+
+        $jsonObjects = [];
+        foreach ($singleResponseJsons as $singleResponseJson) {
+            $jsonObjects[] = $this->parseToJsonObject($singleResponseJson, $response);
         }
-        return $jsonObject;
+        return $jsonObjects;
+    }
+
+    private static function splitToSingleJsons($string): array
+    {
+        $resultJsons = [];
+        $stringLength = strlen($string);
+        $openedBracesCounter = 0;
+        $currentJsonStartIndex = 0;
+
+        for ($i = 0; $i < $stringLength; $i++) {
+            $char = $string[$i];
+            if ($char === '{') {
+                $openedBracesCounter++;
+                if ($openedBracesCounter === 1) {
+                    $currentJsonStartIndex = $i;
+                }
+            } elseif ($char === '}') {
+                $openedBracesCounter--;
+                if ($openedBracesCounter === 0) {
+                    $currentJsonLength = $i - $currentJsonStartIndex + 1;
+                    $resultJsons[] = substr($string, $currentJsonStartIndex, $currentJsonLength);
+                }
+            }
+        }
+
+        return $resultJsons;
     }
 
     private function streamxClientExceptionFrom(FailureResponse $failureResponse): StreamxClientException
@@ -113,5 +143,18 @@ class GuzzleHttpRequester implements HttpRequester
             $failureResponse->getErrorCode(),
             $failureResponse->getErrorMessage()
         );
+    }
+
+    /**
+     * @throws StreamxClientException
+     */
+    private function parseToJsonObject(string $json, ResponseInterface $response)
+    {
+        $jsonObject = json_decode($json);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new StreamxClientException(sprintf('Communication error. Response status: %s. Message: %s',
+                $response->getStatusCode(), 'Response could not be parsed.'));
+        }
+        return $jsonObject;
     }
 }

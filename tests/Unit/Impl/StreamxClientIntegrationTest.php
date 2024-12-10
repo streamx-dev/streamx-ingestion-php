@@ -3,12 +3,16 @@
 namespace Streamx\Clients\Ingestion\Tests\Unit\Impl;
 
 use PHPUnit\Framework\TestCase;
+use Streamx\Clients\Ingestion\Impl\DefaultJsonProvider;
+use Streamx\Clients\Ingestion\Impl\MessageStatus;
+use Streamx\Clients\Ingestion\Impl\RestPublisher;
+use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 use Streamx\Clients\Ingestion\StreamXClient;
 use Streamx\Clients\Ingestion\Builders\StreamxClientBuilders;
 use Streamx\Clients\Ingestion\Publisher\Message;
 use Streamx\Clients\Ingestion\Publisher\Publisher;
 use Streamx\Clients\Ingestion\Tests\Testing\Model\Content;
-use Streamx\Clients\Ingestion\Tests\Testing\Model\Page;
+use Streamx\Clients\Ingestion\Tests\Testing\Model\Data;
 
 /**
  * Integration test to be executed manually on demand.
@@ -16,89 +20,152 @@ use Streamx\Clients\Ingestion\Tests\Testing\Model\Page;
  * Requirements: running StreamX instance, with:
  *  - ingestion service available at http://localhost:8080
  *  - web delivery service available at http://localhost:8081
- *  - pages schema same as in tests/resources/integration-pages-schema.avsc
  * If you need to configure those requirements to match to your StreamX instance - please don't commit such changes
  */
 class StreamxClientIntegrationTest extends TestCase {
 
     private const INGESTION_BASE_URL = "http://localhost:8080";
     private const DELIVERY_BASE_URL = "http://localhost:8081";
-    private const PAGES_SCHEMA_NAME = 'dev.streamx.blueprints.data.PageIngestionMessage';
 
-    private const PAGE_OBJECT_KEY = "page-object-key";
-    private const PAGE_ARRAY_KEY = "page-array-key";
+    private const DATA_CHANNEL = "data";
+    private const DATA_SCHEMA_NAME = 'dev.streamx.blueprints.data.DataIngestionMessage';
+
+    private const DATA_OBJECT_KEY = "data-object-key";
+    private const DATA_ARRAY_KEY = "data-array-key";
     private const MESSAGE_OBJECT_KEY = "message-object-key";
-    private const MESSAGE_OBJECT_WITH_PAGE_ARRAY_KEY = "message-object-with-page-array-key";
+    private const MESSAGE_OBJECT_WITH_DATA_ARRAY_KEY = "message-object-with-data-array-key";
+    private const MULTIMESSAGE_DATA_OBJECT_KEY = "multimessage-data-object-key";
 
     private const CONTENT = "test content from php client";
     private const TIMEOUT_SECONDS = 3;
 
     private static StreamXClient $client;
     private static Publisher $publisher;
-    private static Page $page;
-    private static array $pageArray;
+    private static Data $data;
+    private static array $dataArray;
 
     public static function setUpBeforeClass(): void {
         self::$client = StreamxClientBuilders::create(self::INGESTION_BASE_URL)->build();
-        self::$publisher = self::$client->newPublisher("pages", self::PAGES_SCHEMA_NAME);
-        self::$page = new Page(new Content(self::CONTENT));
-        self::$pageArray = ['content' => ['bytes' => self::CONTENT]];
+        self::$publisher = self::$client->newPublisher(self::DATA_CHANNEL, self::DATA_SCHEMA_NAME);
+        self::$data = new Data(new Content(self::CONTENT));
+        self::$dataArray = ['content' => ['bytes' => self::CONTENT]];
     }
 
     //** @test */
-    public function shouldPublishAndUnpublishPageObject() {
-        $this->shouldPublishAndUnpublishPagePayload(
-            self::PAGE_OBJECT_KEY,
-            self::$page
+    public function shouldPublishAndUnpublishDataObject() {
+        $this->shouldPublishAndUnpublishDataPayload(
+            self::DATA_OBJECT_KEY,
+            self::$data
         );
     }
 
     //** @test */
-    public function shouldPublishAndUnpublishPageArray() {
-        $this->shouldPublishAndUnpublishPagePayload(
-            self::PAGE_ARRAY_KEY,
-            self::$pageArray
+    public function shouldPublishAndUnpublishDataArray() {
+        $this->shouldPublishAndUnpublishDataPayload(
+            self::DATA_ARRAY_KEY,
+            self::$dataArray
         );
     }
 
-    private function shouldPublishAndUnpublishPagePayload($key, $pagePayload) {
-        self::$publisher->publish($key, $pagePayload);
-        $this->assertPageIsPublished($key);
+    private function shouldPublishAndUnpublishDataPayload($key, $dataPayload) {
+        self::$publisher->publish($key, $dataPayload);
+        $this->assertDataIsPublished($key);
 
         self::$publisher->unpublish($key);
-        $this->assertPageIsUnpublished($key);
+        $this->assertDataIsUnpublished($key);
     }
 
     //** @test */
-    public function shouldPublishAndUnpublishMessageWithPageObject() {
-        $this->shouldPublishAndUnpublishPageMessage(
+    public function shouldPublishAndUnpublishMessageWithDataObject() {
+        $this->shouldPublishAndUnpublishDataMessage(
             self::MESSAGE_OBJECT_KEY,
-            self::$page
+            self::$data
         );
     }
 
     //** @test */
-    public function shouldPublishAndUnpublishMessageWithPageArray() {
-        $this->shouldPublishAndUnpublishPageMessage(
-            self::MESSAGE_OBJECT_WITH_PAGE_ARRAY_KEY,
-            self::$pageArray
+    public function shouldPublishAndUnpublishMessageWithDataArray() {
+        $this->shouldPublishAndUnpublishDataMessage(
+            self::MESSAGE_OBJECT_WITH_DATA_ARRAY_KEY,
+            self::$dataArray
         );
     }
 
-    private function shouldPublishAndUnpublishPageMessage(string $key, $pagePayload) {
-        $message = (Message::newPublishMessage($key, $pagePayload))
+    private function shouldPublishAndUnpublishDataMessage(string $key, $dataPayload) {
+        $message = (Message::newPublishMessage($key, $dataPayload))
             ->withEventTime((int) (microtime(true) * 1000))
             ->withProperties(['prop-1' => 'value-1', 'prop-2' => 'value-2'])
             ->build();
         self::$publisher->send($message);
-        $this->assertPageIsPublished($key);
+        $this->assertDataIsPublished($key);
 
         $message = (Message::newUnpublishMessage($key))->build();
         self::$publisher->send($message);
-        $this->assertPageIsUnpublished($key);
+        $this->assertDataIsUnpublished($key);
     }
 
-    private function assertPageIsPublished(string $key) {
+    //** @test */
+    public function shouldPublishAndUnpublishMultiMessageRequest() {
+        $keys = [];
+        for ($i = 0; $i < 10; $i++) {
+            $keys[] = self::MULTIMESSAGE_DATA_OBJECT_KEY . "_$i";
+        }
+
+        $this->verifyMultiMessagePublish($keys);
+        $this->verifyMultiMessageUnpublish($keys);
+    }
+
+    private function verifyMultiMessagePublish(array $keys) {
+        // given
+        $messages = [];
+        foreach ($keys as $key) {
+            $messages[] = Message::newPublishMessage($key, self::$dataArray)->build();
+        }
+
+        // when
+        $results = self::$publisher->sendMulti($messages);
+
+        // then
+        $this->verifyStreamxResponse($keys, $results);
+
+        // and
+        foreach ($keys as $key) {
+            $this->assertDataIsPublished($key);
+        }
+    }
+
+    private function verifyMultiMessageUnpublish(array $keys) {
+        // given
+        $messages = [];
+        foreach ($keys as $key) {
+            $messages[] = Message::newUnpublishMessage($key)->build();
+        }
+
+        // when
+        $results = self::$publisher->sendMulti($messages);
+
+        // then
+        $this->verifyStreamxResponse($keys, $results);
+
+        // and
+        foreach ($keys as $key) {
+            $this->assertDataIsUnpublished($key);
+        }
+    }
+
+    public function verifyStreamxResponse(array $inputMessageKeys, array $ingestionEndpointResults): void
+    {
+        $this->assertSameSize($inputMessageKeys, $ingestionEndpointResults);
+        for ($i = 0; $i < count($ingestionEndpointResults); $i++) {
+            $result = $ingestionEndpointResults[$i];
+            $this->assertInstanceOf(MessageStatus::class, $result);
+            $this->assertNotNull($result->getSuccess());
+            $this->assertEquals($inputMessageKeys[$i], $result->getSuccess()->getKey());
+            $this->assertIsInt($result->getSuccess()->getEventTime());
+        }
+    }
+
+    private function assertDataIsPublished(string $key) {
         $url = self::DELIVERY_BASE_URL . '/' . $key;
     
         $startTime = time();
@@ -111,10 +178,10 @@ class StreamxClientIntegrationTest extends TestCase {
             usleep(100000); // sleep for 100 milliseconds
         }
         
-        $this->fail("$url: page not found");
+        $this->fail("$url: not found");
     }
 
-    private function assertPageIsUnpublished(string $key) {
+    private function assertDataIsUnpublished(string $key) {
         $url = self::DELIVERY_BASE_URL . '/' . $key;
     
         $startTime = time();
@@ -127,7 +194,7 @@ class StreamxClientIntegrationTest extends TestCase {
             usleep(100000); // sleep for 100 milliseconds
         }
         
-        $this->fail("$url: page exists");
+        $this->fail("$url: exists");
     }
 }
 

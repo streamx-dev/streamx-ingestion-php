@@ -34,7 +34,7 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
         $result = $this->createPagesPublisher()->publish($key, $data);
 
         // Then
-        $this->assertPublishPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
             '/custom-ingestion/v2/channels/pages/messages',
             $this->defaultPublishMessageJson($key, '{"message":"test"}'));
 
@@ -60,7 +60,7 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
         $result = $this->createPagesPublisher()->publish("key", $data);
 
         // Then
-        $this->assertPublishPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
             '/custom-requester-ingestion/v1/channels/pages/messages',
             $this->defaultPublishMessageJson($key, '{"message":"custom requester"}'));
 
@@ -109,7 +109,7 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
         $result = $this->createPagesPublisher()->publish($key, $data);
 
         // Then
-        $this->assertPublishPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             $this->defaultPublishMessageJson($key, '{"message":"custom http client"}'),
             ['X-StreamX' => 'Custom http client']);
@@ -136,7 +136,7 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
         $result = $this->createPagesPublisher()->publish("key", $data);
 
         // Then
-        $this->assertPublishPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             $this->defaultPublishMessageJson($key, '{"property":"original","customProperty":"Added by custom Json Provider"}'));
 
