@@ -125,15 +125,8 @@ class StreamxClientIntegrationTest extends TestCase {
         // when
         $results = self::$publisher->sendMulti($messages);
 
-        // then: verify response
-        $this->assertSameSize($keys, $results);
-        for ($i = 0; $i < count($results); $i++) {
-            $result = $results[$i];
-            $this->assertInstanceOf(MessageStatus::class, $result);
-            $this->assertNotNull($result->getSuccess());
-            $this->assertEquals($keys[$i], $result->getSuccess()->getKey());
-            $this->assertIsInt($result->getSuccess()->getEventTime());
-        }
+        // then
+        $this->verifyStreamxResponse($keys, $results);
 
         // and
         foreach ($keys as $key) {
@@ -149,11 +142,26 @@ class StreamxClientIntegrationTest extends TestCase {
         }
 
         // when
-        self::$publisher->sendMulti($messages);
+        $results = self::$publisher->sendMulti($messages);
 
         // then
+        $this->verifyStreamxResponse($keys, $results);
+
+        // and
         foreach ($keys as $key) {
             $this->assertDataIsUnpublished($key);
+        }
+    }
+
+    public function verifyStreamxResponse(array $inputMessageKeys, array $ingestionEndpointResults): void
+    {
+        $this->assertSameSize($inputMessageKeys, $ingestionEndpointResults);
+        for ($i = 0; $i < count($ingestionEndpointResults); $i++) {
+            $result = $ingestionEndpointResults[$i];
+            $this->assertInstanceOf(MessageStatus::class, $result);
+            $this->assertNotNull($result->getSuccess());
+            $this->assertEquals($inputMessageKeys[$i], $result->getSuccess()->getKey());
+            $this->assertIsInt($result->getSuccess()->getEventTime());
         }
     }
 
