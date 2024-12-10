@@ -65,6 +65,7 @@ class MockServerTestCase extends TestCase
         $this->assertEquals('POST', $request->getRequestMethod());
         $this->assertEquals($uri, $request->getRequestUri());
         $this->assertEquals($expectedBody, $request->getInput());
+        $this->assertEquals('application/json; charset=UTF-8', $request->getHeaders()['Content-Type']);
         $this->assertHeaders($request, $headers);
     }
 
