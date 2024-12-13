@@ -5,6 +5,7 @@ namespace Streamx\Clients\Ingestion\Impl;
 use InvalidArgumentException;
 use Psr\Http\Message\UriInterface;
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
+use Streamx\Clients\Ingestion\Exceptions\StreamxClientExceptionFactory;
 use Streamx\Clients\Ingestion\Impl\Utils\HttpUtils;
 use Streamx\Clients\Ingestion\Publisher\HttpRequester;
 use Streamx\Clients\Ingestion\Publisher\JsonProvider;
@@ -30,12 +31,12 @@ class RestPublisher extends Publisher
     ) {
         $this->headers = $this->buildHttpHeaders($authToken);
         $this->messageIngestionEndpointUri = $this->buildMessageIngestionUri($ingestionEndpointUri, $channel);
-        $this->payloadTypeName = $this->convertToPayloadTypeName($channelSchemaName);
+        $this->payloadTypeName = self::convertToPayloadTypeName($channelSchemaName);
         $this->httpRequester = $httpRequester;
         $this->jsonProvider = $jsonProvider;
     }
 
-    private function convertToPayloadTypeName($channelSchemaName): string
+    private static function convertToPayloadTypeName($channelSchemaName): string
     {
         $payloadTypeName = preg_replace('/IngestionMessage$/', '', $channelSchemaName);
         if ($payloadTypeName == $channelSchemaName)
@@ -47,12 +48,28 @@ class RestPublisher extends Publisher
 
     public function send(Message $message): SuccessResult
     {
-        $json = $this->jsonProvider->getJson($message, $this->payloadTypeName);
-        $actualHeaders = $message->action == Message::PUBLISH_ACTION
-            ? array_merge($this->headers, ['Content-Type' => 'application/json; charset=UTF-8'])
-            : $this->headers;
+        $messageStatus = $this->sendMulti([$message])[0];
 
-        return $this->httpRequester->executePost($this->messageIngestionEndpointUri, $actualHeaders, $json);
+        if ($messageStatus->getSuccess() != null) {
+            return $messageStatus->getSuccess();
+        }
+
+        $failureResponse = $messageStatus->getFailure();
+        throw StreamxClientExceptionFactory::create(
+            $failureResponse->getErrorCode(),
+            $failureResponse->getErrorMessage()
+        );
+    }
+
+    public function sendMulti(array $messages): array
+    {
+        $multiMessageJson = '';
+        foreach ($messages as $message) {
+            $multiMessageJson .= $this->jsonProvider->getJson($message, $this->payloadTypeName);
+        }
+
+        $actualHeaders = array_merge($this->headers, ['Content-Type' => 'application/json; charset=UTF-8']);
+        return $this->httpRequester->executePost($this->messageIngestionEndpointUri, $actualHeaders, $multiMessageJson);
     }
 
     private function buildHttpHeaders(?string $authToken): array

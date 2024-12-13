@@ -3,6 +3,7 @@
 namespace Streamx\Clients\Ingestion\Publisher;
 
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
+use Streamx\Clients\Ingestion\Impl\MessageStatus;
 
 /**
  * StreamX publications ingestion endpoint contract. `Publisher` instance is reusable.
@@ -42,4 +43,12 @@ abstract class Publisher
      * @throws StreamxClientException If command filed.
      */
     public abstract function send(Message $message): SuccessResult;
+
+    /**
+     * Sends the provided ingestion messages to the Ingestion endpoint.
+     * @param Message[] $messages Ingestion messages.
+     * @return MessageStatus[] with SuccessResult and/or FailureResponse from ingestion endpoint for each input message (in order).
+     * @throws StreamxClientException If a critical error occurred and the MessageStatus[] with SuccessResult and/or FailureResponse cannot be returned.
+     */
+    public abstract function sendMulti(array $messages): array;
 }
