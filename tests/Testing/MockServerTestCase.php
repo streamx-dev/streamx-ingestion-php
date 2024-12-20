@@ -56,26 +56,48 @@ class MockServerTestCase extends TestCase
         return '{"key":"'.$key.'","action":"unpublish","eventTime":null,"properties":{},"payload":null}';
     }
 
-    protected function assertIngestionPostRequest(
+    protected function assertIngestionRequest(
         RequestInfo $request,
         string $uri,
         string $expectedBody,
         array $headers = null
     ): void {
-        $this->assertEquals('POST', $request->getRequestMethod());
+        $this->assertRequest($request, 'POST', $uri, $expectedBody, $headers);
+    }
+
+    protected function assertSchemaRequest(
+        RequestInfo $request,
+        string $uri,
+        array $headers = null
+    ): void {
+        $this->assertRequest($request, 'GET', $uri, null, $headers);
+    }
+
+    private function assertRequest(
+        RequestInfo $request,
+        string $expectedMethod,
+        string $uri,
+        ?string $expectedBody,
+        array $headers = null
+    ): void {
+        $this->assertEquals($expectedMethod, $request->getRequestMethod());
         $this->assertEquals($uri, $request->getRequestUri());
         $this->assertEquals($expectedBody, $request->getInput());
-        $this->assertEquals('application/json; charset=UTF-8', $request->getHeaders()['Content-Type']);
+        if ($expectedMethod === 'GET') {
+            $this->assertNotContains('Content-Type', array_keys($request->getHeaders()));
+        } else {
+            $this->assertEquals('application/json; charset=UTF-8', $request->getHeaders()['Content-Type']);
+        }
         $this->assertHeaders($request, $headers);
     }
 
-    protected function assertHeaders(RequestInfo $request, ?array $headers): void
+    private function assertHeaders(RequestInfo $request, ?array $expectedHeaders): void
     {
-        if ($headers == null) {
-            return;
-        }
-        foreach ($headers as $name => $value) {
-            $this->assertEquals($value, $request->getHeaders()[$name]);
+        if ($expectedHeaders) {
+            $requestHeaders = $request->getHeaders();
+            foreach ($expectedHeaders as $name => $value) {
+                $this->assertEquals($value, $requestHeaders[$name]);
+            }
         }
     }
 }
