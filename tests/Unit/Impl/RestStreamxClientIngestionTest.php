@@ -18,7 +18,7 @@ use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 use Streamx\Clients\Ingestion\Tests\Testing\MockServerTestCase;
 use Streamx\Clients\Ingestion\Tests\Testing\StreamxResponse;
 
-class RestStreamxClientTest extends MockServerTestCase
+class RestStreamxClientIngestionTest extends MockServerTestCase
 {
     private const LAST_REQUEST_OFFSET = -1;
 
@@ -37,7 +37,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $result = $this->createPagesPublisher()->publish($key, $data);
 
         // Then
-        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             $this->defaultPublishMessageJson($key,
                 '{"data":{"name":"Data name","description":"Data description"},' .
@@ -60,7 +60,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $result = $this->createPagesPublisher()->publish($key, $data);
 
         // Then
-        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             $this->defaultPublishMessageJson($key, '{"content":{"bytes":"Text"}}'));
 
@@ -87,7 +87,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $result = $this->createPagesPublisher()->send($message);
 
         // Then
-        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             '{'.
                 '"key":"key-to-publish",'.
@@ -128,7 +128,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $result = $this->createPagesPublisher()->unpublish($key);
 
         // Then
-        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             $this->defaultUnpublishMessageJson($key),
         );
@@ -155,7 +155,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $result = $this->createPagesPublisher()->send($message);
 
         // Then
-        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             '{'.
                 '"key":"key-to-unpublish",'.
@@ -198,7 +198,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $result = $this->createPagesPublisher()->send($message);
 
         // Then
-        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             $this->defaultPublishMessageJson($key, '{"name":"name","description":"content"}'));
 
@@ -227,12 +227,12 @@ class RestStreamxClientTest extends MockServerTestCase
         $this->createPagesPublisher()->unpublish($unpublishKey);
 
         // Then
-        $this->assertIngestionPostRequest(self::$server->getRequestByOffset($this::LAST_REQUEST_OFFSET - 1),
+        $this->assertIngestionRequest(self::$server->getRequestByOffset($this::LAST_REQUEST_OFFSET - 1),
             '/ingestion/v1/channels/pages/messages',
             $this->defaultPublishMessageJson($publishKey, '{"name":"Test name","description":null}'),
             ['Authorization' => 'Bearer abc-100']);
 
-        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             $this->defaultUnpublishMessageJson($unpublishKey),
             ['Authorization' => 'Bearer abc-100']);
@@ -252,7 +252,7 @@ class RestStreamxClientTest extends MockServerTestCase
         $result = $this->createPagesPublisher()->publish($key, $data);
 
         // Then
-        $this->assertIngestionPostRequest(self::$server->getLastRequest(),
+        $this->assertIngestionRequest(self::$server->getLastRequest(),
             '/ingestion/v1/channels/pages/messages',
             $this->defaultPublishMessageJson($key, '{"message":"\u00a1Hola, \ud83c\udf0d!"}'));
 
@@ -584,7 +584,7 @@ class RestStreamxClientTest extends MockServerTestCase
 
         // Expect exception
         $this->expectException(StreamxClientException::class);
-        $this->expectExceptionMessage('POST request with URI: ' .
+        $this->expectExceptionMessage('Ingestion POST request with URI: ' .
             'https://non-existing/ingestion/v1/channels/errors/messages failed due to HTTP client error');
 
         // When
@@ -599,7 +599,7 @@ class RestStreamxClientTest extends MockServerTestCase
 
         // Expect exception
         $this->expectException(StreamxClientException::class);
-        $this->expectExceptionMessage('POST request with URI: ' .
+        $this->expectExceptionMessage('Ingestion POST request with URI: ' .
             'https://non-existing/ingestion/v1/channels/errors/messages failed due to HTTP client error');
 
         // When

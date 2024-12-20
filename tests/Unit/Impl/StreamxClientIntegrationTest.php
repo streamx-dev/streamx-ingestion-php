@@ -150,8 +150,7 @@ class StreamxClientIntegrationTest extends TestCase {
         }
     }
 
-    public function verifyStreamxResponse(array $inputMessageKeys, array $ingestionEndpointResults): void
-    {
+    private function verifyStreamxResponse(array $inputMessageKeys, array $ingestionEndpointResults): void {
         $this->assertSameSize($inputMessageKeys, $ingestionEndpointResults);
         for ($i = 0; $i < count($ingestionEndpointResults); $i++) {
             $result = $ingestionEndpointResults[$i];
@@ -160,6 +159,24 @@ class StreamxClientIntegrationTest extends TestCase {
             $this->assertEquals($inputMessageKeys[$i], $result->getSuccess()->getKey());
             $this->assertIsInt($result->getSuccess()->getEventTime());
         }
+    }
+
+    //** @test */
+    public function shouldRetrieveChannelSchema() {
+        // when
+        $schemaJson = self::$publisher->getSchema();
+
+        // then
+        $schemaArray = json_decode($schemaJson, true);
+        $this->assertEquals('record', $schemaArray['type']);
+        $this->assertEquals('PageIngestionMessage', $schemaArray['name']);
+        $this->assertEquals('dev.streamx.blueprints.data', $schemaArray['namespace']);
+
+        $fieldNames = [];
+        foreach ($schemaArray['fields'] as $field) {
+            $fieldNames[] = $field['name'];
+        }
+        $this->assertEquals(['key', 'action', 'eventTime', 'properties', 'payload'], $fieldNames);
     }
 
     private function assertPageIsPublished(string $key) {

@@ -20,20 +20,25 @@ class CustomTestHttpRequester implements HttpRequester
         $this->httpRequester = new GuzzleHttpRequester();
     }
 
-    public function executePost(
+    public function executeIngestionRequest(
         UriInterface $endpointUri,
         array $headers,
         string $json
     ): array {
         $endpointUri = $this->modifyUri($endpointUri);
-        return $this->httpRequester->executePost($endpointUri, $headers, $json);
+        return $this->httpRequester->executeIngestionRequest($endpointUri, $headers, $json);
     }
 
     private function modifyUri(UriInterface $uri): UriInterface
     {
         return $uri->withPath(
-            str_replace(StreamxClient::INGESTION_ENDPOINT_PATH_V1,
+            str_replace(StreamxClient::INGESTION_ENDPOINT_BASE_PATH,
                 $this->ingestionEndpointPath, $uri->getPath())
         );
+    }
+
+    public function executeSchemaRequest(UriInterface $endpointUri, array $headers): string
+    {
+        return $this->httpRequester->executeSchemaRequest($endpointUri, $headers);
     }
 }

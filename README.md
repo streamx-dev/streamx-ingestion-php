@@ -14,7 +14,7 @@ As of 2024-11-07, the supported version of StreamX is 0.0.45.
 - [StreamxClientBuilders](src/Builders/StreamxClientBuilders.php) - with which it's possible to
   create default or customized clients,
 - [StreamxClient](src/StreamxClient.php) - with which it's possible to create publishers
-- [Publisher](src/Publisher/Publisher.php) - with which it's possible to make actual publications
+- [Publisher](src/Publisher/Publisher.php) - with which it's possible to make actual ingestions (publishing and unpublishing)
 
 # Example usage:
 
@@ -62,6 +62,9 @@ $message = (Message::newPublishMessage('index.html', $pageData))
     ->withProperties(['prop-1' => 'value-1', 'prop-2' => 'value-2'])
     ->build();
 $pagesPublisher->send($message);
+
+// The Publisher enables you to retrieve the channel schema (as Json String) by invoking the following method:
+$pagesPublisher->getSchema();
 ```
 
 # Installation

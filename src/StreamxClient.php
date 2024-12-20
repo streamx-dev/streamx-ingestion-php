@@ -5,14 +5,14 @@ namespace Streamx\Clients\Ingestion;
 use Streamx\Clients\Ingestion\Publisher\Publisher;
 
 /**
- * Represents a client that can make publications to StreamX Ingestion Service.
+ * Represents a client that can communicate with StreamX Ingestion Service.
  */
 interface StreamxClient
 {
     /**
-     * StreamX REST Ingestion publications path.
+     * StreamX REST Ingestion base path.
      */
-    public const INGESTION_ENDPOINT_PATH_V1 = '/ingestion/v1';
+    public const INGESTION_ENDPOINT_BASE_PATH = '/ingestion/v1';
 
     /**
      * Creates new {@link Publisher} instance.
