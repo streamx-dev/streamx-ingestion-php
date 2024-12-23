@@ -2,6 +2,7 @@
 
 namespace Streamx\Clients\Ingestion\Tests\Unit\Impl;
 
+use Exception;
 use PHPUnit\Framework\TestCase;
 use Streamx\Clients\Ingestion\Impl\MessageStatus;
 use Streamx\Clients\Ingestion\StreamXClient;
@@ -46,9 +47,19 @@ class StreamxClientIntegrationTest extends TestCase {
         self::$publisher = self::$client->newPublisher(self::PAGES_CHANNEL, self::PAGE_SCHEMA_NAME);
         self::$page = new Page(new Content(self::CONTENT));
         self::$pageArray = ['content' => ['bytes' => self::CONTENT]];
+
+        self::skipTestsIfStreamxIsNotAvailable();
     }
 
-    //** @test */
+    private static function skipTestsIfStreamxIsNotAvailable(): void {
+        try {
+            self::$publisher->fetchSchema();
+        } catch (Exception $e) {
+            self::markTestSkipped('Skipping test because StreamX is not accessible: ' . $e->getTraceAsString());
+        }
+    }
+
+    /** @test */
     public function shouldPublishAndUnpublishPageObject() {
         $this->shouldPublishAndUnpublishPagePayload(
             self::PAGE_OBJECT_KEY,
@@ -56,7 +67,7 @@ class StreamxClientIntegrationTest extends TestCase {
         );
     }
 
-    //** @test */
+    /** @test */
     public function shouldPublishAndUnpublishPageArray() {
         $this->shouldPublishAndUnpublishPagePayload(
             self::PAGE_ARRAY_KEY,
@@ -72,7 +83,7 @@ class StreamxClientIntegrationTest extends TestCase {
         $this->assertPageIsUnpublished($key);
     }
 
-    //** @test */
+    /** @test */
     public function shouldPublishAndUnpublishMessageWithPageObject() {
         $this->shouldPublishAndUnpublishPageMessage(
             self::MESSAGE_OBJECT_KEY,
@@ -80,7 +91,7 @@ class StreamxClientIntegrationTest extends TestCase {
         );
     }
 
-    //** @test */
+    /** @test */
     public function shouldPublishAndUnpublishMessageWithPageArray() {
         $this->shouldPublishAndUnpublishPageMessage(
             self::MESSAGE_OBJECT_WITH_PAGE_ARRAY_KEY,
@@ -101,7 +112,7 @@ class StreamxClientIntegrationTest extends TestCase {
         $this->assertPageIsUnpublished($key);
     }
 
-    //** @test */
+    /** @test */
     public function shouldPublishAndUnpublishMultiMessageRequest() {
         $keys = [];
         for ($i = 0; $i < 10; $i++) {
@@ -161,7 +172,7 @@ class StreamxClientIntegrationTest extends TestCase {
         }
     }
 
-    //** @test */
+    /** @test */
     public function shouldFetchChannelSchema() {
         // when
         $schemaJson = self::$publisher->fetchSchema();

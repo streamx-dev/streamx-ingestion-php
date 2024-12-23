@@ -4,7 +4,7 @@ namespace Streamx\Clients\Ingestion\Impl;
 
 use JsonSerializable;
 use stdClass;
-use Streamx\Clients\Ingestion\Impl\Utils\DataValidator;
+use Streamx\Clients\Ingestion\Impl\Utils\PropertyRetriever;
 use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 
 class MessageStatus implements JsonSerializable
@@ -46,10 +46,10 @@ class MessageStatus implements JsonSerializable
 
     public static function fromJson(StdClass $json): MessageStatus
     {
-        $dataValidator = DataValidator::for($json);
+        $propertyRetriever = PropertyRetriever::for($json);
         return new MessageStatus(
-            SuccessResult::fromJson($dataValidator->retrieveNullable('success')),
-            FailureResponse::fromJson($dataValidator->retrieveNullable('failure'))
+            SuccessResult::fromJson($propertyRetriever->retrieveNullable('success')),
+            FailureResponse::fromJson($propertyRetriever->retrieveNullable('failure'))
         );
     }
 }
