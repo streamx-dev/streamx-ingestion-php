@@ -15,14 +15,18 @@ use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 
 class RestPublisher extends Publisher
 {
+    private const INGESTION_ENDPOINT_RELATIVE_PATH = "channels/[CHANNEL]/messages";
+    private const SCHEMA_ENDPOINT_RELATIVE_PATH = "channels/[CHANNEL]/schema";
+
     private array $headers;
-    private UriInterface $messageIngestionEndpointUri;
+    private UriInterface $ingestionEndpointUri;
+    private UriInterface $schemaEndpointUri;
     private string $payloadTypeName;
     private HttpRequester $httpRequester;
     private JsonProvider $jsonProvider;
 
     public function __construct(
-        UriInterface $ingestionEndpointUri,
+        UriInterface $ingestionEndpointBaseUri,
         string $channel,
         string $channelSchemaName,
         ?string $authToken,
@@ -30,7 +34,8 @@ class RestPublisher extends Publisher
         JsonProvider $jsonProvider
     ) {
         $this->headers = $this->buildHttpHeaders($authToken);
-        $this->messageIngestionEndpointUri = $this->buildMessageIngestionUri($ingestionEndpointUri, $channel);
+        $this->ingestionEndpointUri = self::buildUri($ingestionEndpointBaseUri, self::INGESTION_ENDPOINT_RELATIVE_PATH, $channel);
+        $this->schemaEndpointUri = self::buildUri($ingestionEndpointBaseUri, self::SCHEMA_ENDPOINT_RELATIVE_PATH, $channel);
         $this->payloadTypeName = self::convertToPayloadTypeName($channelSchemaName);
         $this->httpRequester = $httpRequester;
         $this->jsonProvider = $jsonProvider;
@@ -69,7 +74,12 @@ class RestPublisher extends Publisher
         }
 
         $actualHeaders = array_merge($this->headers, ['Content-Type' => 'application/json; charset=UTF-8']);
-        return $this->httpRequester->executePost($this->messageIngestionEndpointUri, $actualHeaders, $multiMessageJson);
+        return $this->httpRequester->performIngestion($this->ingestionEndpointUri, $actualHeaders, $multiMessageJson);
+    }
+
+    public function fetchSchema(): string
+    {
+        return $this->httpRequester->fetchSchema($this->schemaEndpointUri, $this->headers);
     }
 
     private function buildHttpHeaders(?string $authToken): array
@@ -83,8 +93,9 @@ class RestPublisher extends Publisher
     /**
      * @throws StreamxClientException
      */
-    private function buildMessageIngestionUri(UriInterface $ingestionEndpointUri, string $channel): UriInterface
+    private static function buildUri(UriInterface $ingestionEndpointBaseUri, string $relativePath, string $channel): UriInterface
     {
-        return HttpUtils::buildUri("$ingestionEndpointUri/channels/$channel/messages");
+        $uriString = str_replace('[CHANNEL]', $channel, "$ingestionEndpointBaseUri/$relativePath");
+        return HttpUtils::buildUri($uriString);
     }
 }

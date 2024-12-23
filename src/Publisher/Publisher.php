@@ -6,15 +6,15 @@ use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
 use Streamx\Clients\Ingestion\Impl\MessageStatus;
 
 /**
- * StreamX publications ingestion endpoint contract. `Publisher` instance is reusable.
+ * StreamX ingestion endpoint contract. `Publisher` instance is reusable.
  */
 abstract class Publisher
 {
 
     /**
-     * Performs publications ingestion endpoint `publish` command.
-     * @param string $key Publication key.
-     * @param array|object $payload Publication payload.
+     * Performs ingestion endpoint `publish` command.
+     * @param string $key Publish key.
+     * @param array|object $payload Publish payload.
      * @return SuccessResult containing ingestion endpoint response entity.
      * @throws StreamxClientException if command failed.
      */
@@ -25,8 +25,8 @@ abstract class Publisher
     }
 
     /**
-     * Performs publications ingestion endpoint `unpublish` command.
-     * @param string $key Publication key.
+     * Performs ingestion endpoint `unpublish` command.
+     * @param string $key Unpublish key.
      * @return SuccessResult containing ingestion endpoint response entity.
      * @throws StreamxClientException if command failed.
      */
@@ -51,4 +51,9 @@ abstract class Publisher
      * @throws StreamxClientException If a critical error occurred and the MessageStatus[] with SuccessResult and/or FailureResponse cannot be returned.
      */
     public abstract function sendMulti(array $messages): array;
+
+    /**
+     * @return string schema of the Publisher's channel
+     */
+    public abstract function fetchSchema(): string;
 }

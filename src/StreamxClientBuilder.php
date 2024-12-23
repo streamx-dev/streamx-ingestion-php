@@ -14,12 +14,12 @@ interface StreamxClientBuilder
 {
 
     /**
-     * Configures custom StreamX REST Ingestion publication path. Default value is
-     * {@link StreamxClient::INGESTION_ENDPOINT_PATH_V1}.
-     * @param string $ingestionEndpointUri StreamX REST Ingestion publication path.
+     * Configures custom StreamX REST Ingestion base path. Default value is
+     * {@link StreamxClient::INGESTION_ENDPOINT_BASE_PATH}.
+     * @param string $ingestionEndpointBaseUri StreamX REST Ingestion base path.
      * @return StreamxClientBuilder
      */
-    public function setIngestionEndpointUri(string $ingestionEndpointUri
+    public function setIngestionEndpointBaseUri(string $ingestionEndpointBaseUri
     ): StreamxClientBuilder;
 
     /**

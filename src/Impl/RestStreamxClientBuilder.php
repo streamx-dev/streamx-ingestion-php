@@ -11,7 +11,7 @@ use Streamx\Clients\Ingestion\StreamxClientBuilder;
 class RestStreamxClientBuilder implements StreamxClientBuilder
 {
     private string $serverUrl;
-    private ?string $ingestionEndpointUri = null;
+    private ?string $ingestionEndpointBaseUri = null;
     private ?string $authToken = null;
     private ?HttpRequester $httpRequester = null;
     private ?ClientInterface $httpClient = null;
@@ -22,9 +22,9 @@ class RestStreamxClientBuilder implements StreamxClientBuilder
         $this->serverUrl = $serverUrl;
     }
 
-    public function setIngestionEndpointUri(string $ingestionEndpointUri): StreamxClientBuilder
+    public function setIngestionEndpointBaseUri(string $ingestionEndpointBaseUri): StreamxClientBuilder
     {
-        $this->ingestionEndpointUri = $ingestionEndpointUri;
+        $this->ingestionEndpointBaseUri = $ingestionEndpointBaseUri;
         return $this;
     }
 
@@ -57,14 +57,14 @@ class RestStreamxClientBuilder implements StreamxClientBuilder
         $this->ensureIngestionEndpointUri();
         $this->ensureHttpRequester();
         $this->ensureJsonProvider();
-        return new RestStreamxClient($this->serverUrl, $this->ingestionEndpointUri,
+        return new RestStreamxClient($this->serverUrl, $this->ingestionEndpointBaseUri,
             $this->authToken, $this->httpRequester, $this->jsonProvider);
     }
 
     private function ensureIngestionEndpointUri(): void
     {
-        if ($this->ingestionEndpointUri == null) {
-            $this->ingestionEndpointUri = StreamxClient::INGESTION_ENDPOINT_PATH_V1;
+        if ($this->ingestionEndpointBaseUri == null) {
+            $this->ingestionEndpointBaseUri = StreamxClient::INGESTION_ENDPOINT_BASE_PATH;
         }
     }
 

@@ -24,7 +24,7 @@ class GuzzleHttpRequester implements HttpRequester
         $this->httpClient = $httpClient ?? new GuzzleHttpClient();
     }
 
-    public function executePost(
+    public function performIngestion(
         UriInterface $endpointUri,
         array $headers,
         string $json
@@ -32,10 +32,25 @@ class GuzzleHttpRequester implements HttpRequester
         try {
             $request = new Request('POST', $endpointUri, $headers, $json);
             $response = $this->httpClient->sendRequest($request);
-            return $this->handleResponse($response);
+            return $this->handleIngestionResponse($response);
         } catch (ClientExceptionInterface $e) {
             throw new StreamxClientException(
-                sprintf('POST request with URI: %s failed due to HTTP client error', $endpointUri),
+                sprintf('Ingestion POST request with URI: %s failed due to HTTP client error', $endpointUri),
+                $e);
+        }
+    }
+
+    public function fetchSchema(
+        UriInterface $endpointUri,
+        array $headers
+    ): string {
+        try {
+            $request = new Request('GET', $endpointUri, $headers);
+            $response = $this->httpClient->sendRequest($request);
+            return $this->handleSchemaResponse($response);
+        } catch (ClientExceptionInterface $e) {
+            throw new StreamxClientException(
+                sprintf('Schema GET request with URI: %s failed due to HTTP client error', $endpointUri),
                 $e);
         }
     }
@@ -44,27 +59,37 @@ class GuzzleHttpRequester implements HttpRequester
      * @return MessageStatus[]
      * @throws StreamxClientException
      */
-    private function handleResponse(ResponseInterface $response): array
+    private function handleIngestionResponse(ResponseInterface $response): array
     {
         $statusCode = $response->getStatusCode();
 
-        if ($statusCode == 202) {
-            return $this->parseMessageStatuses($response);
+        switch ($statusCode) {
+            case 202:
+                return $this->parseMessageStatuses($response);
+            case 401:
+                throw $this->createAuthenticationException();
+            case in_array($statusCode, [400, 403, 500]):
+                $failureResponse = $this->parseFailureResponse($response);
+                throw $this->streamxClientExceptionFrom($failureResponse);
+            default:
+                throw $this->createGenericCommunicationException($response);
         }
+    }
 
-        if ($statusCode == 401) {
-            throw new StreamxClientException('Authentication failed. Make sure that the given token is valid.');
+    /**
+     * @throws StreamxClientException
+     */
+    private function handleSchemaResponse(ResponseInterface $response): string
+    {
+        $statusCode = $response->getStatusCode();
+        switch ($statusCode) {
+            case 200:
+                return (string)$response->getBody();
+            case 401:
+                throw $this->createAuthenticationException();
+            default:
+                throw $this->createGenericCommunicationException($response);
         }
-
-        if (in_array($statusCode, [400, 403, 500])) {
-            $failureResponse = $this->parseFailureResponse($response);
-            throw $this->streamxClientExceptionFrom($failureResponse);
-        }
-
-        throw new StreamxClientException(
-            sprintf('Communication error. Response status: %s. Message: %s',
-                $statusCode,
-                $response->getReasonPhrase()));
     }
 
     /**
@@ -132,5 +157,18 @@ class GuzzleHttpRequester implements HttpRequester
                 $response->getStatusCode(), 'Response could not be parsed.'));
         }
         return $jsonObject;
+    }
+
+    private static function createAuthenticationException(): StreamxClientException
+    {
+        return new StreamxClientException('Authentication failed. Make sure that the given token is valid.');
+    }
+
+    private static function createGenericCommunicationException(ResponseInterface $response): StreamxClientException
+    {
+        return new StreamxClientException(
+            sprintf('Communication error. Response status: %s. Message: %s',
+                $response->getStatusCode(),
+                $response->getReasonPhrase()));
     }
 }
