@@ -19,7 +19,7 @@ interface HttpRequester
      * @return MessageStatus[] with SuccessResult and/or FailureResponse of processing messages in the request
      * @throws StreamxClientException if request failed.
      */
-    public function executeIngestionRequest(
+    public function performIngestion(
         UriInterface $endpointUri,
         array $headers,
         string $json
@@ -32,7 +32,7 @@ interface HttpRequester
      * @return string response of the endpoint.
      * @throws StreamxClientException if request failed.
      */
-    public function executeSchemaRequest(
+    public function fetchSchema(
         UriInterface $endpointUri,
         array $headers
     ): string;

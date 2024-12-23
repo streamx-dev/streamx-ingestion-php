@@ -24,7 +24,7 @@ class GuzzleHttpRequester implements HttpRequester
         $this->httpClient = $httpClient ?? new GuzzleHttpClient();
     }
 
-    public function executeIngestionRequest(
+    public function performIngestion(
         UriInterface $endpointUri,
         array $headers,
         string $json
@@ -40,7 +40,7 @@ class GuzzleHttpRequester implements HttpRequester
         }
     }
 
-    public function executeSchemaRequest(
+    public function fetchSchema(
         UriInterface $endpointUri,
         array $headers
     ): string {

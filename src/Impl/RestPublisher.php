@@ -74,12 +74,12 @@ class RestPublisher extends Publisher
         }
 
         $actualHeaders = array_merge($this->headers, ['Content-Type' => 'application/json; charset=UTF-8']);
-        return $this->httpRequester->executeIngestionRequest($this->ingestionEndpointUri, $actualHeaders, $multiMessageJson);
+        return $this->httpRequester->performIngestion($this->ingestionEndpointUri, $actualHeaders, $multiMessageJson);
     }
 
-    public function getSchema(): string
+    public function fetchSchema(): string
     {
-        return $this->httpRequester->executeSchemaRequest($this->schemaEndpointUri, $this->headers);
+        return $this->httpRequester->fetchSchema($this->schemaEndpointUri, $this->headers);
     }
 
     private function buildHttpHeaders(?string $authToken): array

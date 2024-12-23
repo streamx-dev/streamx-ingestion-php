@@ -55,5 +55,5 @@ abstract class Publisher
     /**
      * @return string schema of the Publisher's channel
      */
-    public abstract function getSchema(): string;
+    public abstract function fetchSchema(): string;
 }

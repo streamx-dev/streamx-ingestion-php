@@ -162,9 +162,9 @@ class StreamxClientIntegrationTest extends TestCase {
     }
 
     //** @test */
-    public function shouldRetrieveChannelSchema() {
+    public function shouldFetchChannelSchema() {
         // when
-        $schemaJson = self::$publisher->getSchema();
+        $schemaJson = self::$publisher->fetchSchema();
 
         // then
         $schemaArray = json_decode($schemaJson, true);

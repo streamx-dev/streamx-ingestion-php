@@ -23,7 +23,7 @@ class RestStreamxClientSchemaTest extends MockServerTestCase
             StreamxResponse::custom(200, self::PAGES_SCHEMA_JSON));
 
         // When
-        $result = $this->createPagesPublisher()->getSchema();
+        $result = $this->createPagesPublisher()->fetchSchema();
 
         // Then
         $this->assertSchemaRequest(self::$server->getLastRequest(),
@@ -45,7 +45,7 @@ class RestStreamxClientSchemaTest extends MockServerTestCase
             StreamxResponse::custom(200, self::PAGES_SCHEMA_JSON));
 
         // When
-        $result = $this->createPagesPublisher()->getSchema();
+        $result = $this->createPagesPublisher()->fetchSchema();
 
         // Then
         $this->assertSchemaRequest(self::$server->getLastRequest(),
@@ -68,7 +68,7 @@ class RestStreamxClientSchemaTest extends MockServerTestCase
         $this->expectExceptionMessage('Authentication failed. Make sure that the given token is valid.');
 
         // When
-        $this->createPublisherWithIrrelevantSchema(self::ERRORS_CHANNEL)->getSchema();
+        $this->createPublisherWithIrrelevantSchema(self::ERRORS_CHANNEL)->fetchSchema();
     }
 
     /** @test */
@@ -83,7 +83,7 @@ class RestStreamxClientSchemaTest extends MockServerTestCase
         $this->expectExceptionMessage('Communication error. Response status: 500. Message: Internal Server Error');
 
         // When
-        $this->createPublisherWithIrrelevantSchema(self::ERRORS_CHANNEL)->getSchema();
+        $this->createPublisherWithIrrelevantSchema(self::ERRORS_CHANNEL)->fetchSchema();
     }
 
     /** @test */
@@ -98,6 +98,6 @@ class RestStreamxClientSchemaTest extends MockServerTestCase
             'https://non-existing' . self::ERRORS_SCHEMA_URL . ' failed due to HTTP client error');
 
         // When
-        $this->createPublisherWithIrrelevantSchema(self::ERRORS_CHANNEL)->getSchema();
+        $this->createPublisherWithIrrelevantSchema(self::ERRORS_CHANNEL)->fetchSchema();
     }
 }

@@ -64,7 +64,7 @@ $message = (Message::newPublishMessage('index.html', $pageData))
 $pagesPublisher->send($message);
 
 // The Publisher enables you to retrieve the channel schema (as Json String) by invoking the following method:
-$pagesPublisher->getSchema();
+$pagesPublisher->fetchSchema();
 ```
 
 # Installation

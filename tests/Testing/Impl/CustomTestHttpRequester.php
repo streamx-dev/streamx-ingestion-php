@@ -20,13 +20,13 @@ class CustomTestHttpRequester implements HttpRequester
         $this->httpRequester = new GuzzleHttpRequester();
     }
 
-    public function executeIngestionRequest(
+    public function performIngestion(
         UriInterface $endpointUri,
         array $headers,
         string $json
     ): array {
         $endpointUri = $this->modifyUri($endpointUri);
-        return $this->httpRequester->executeIngestionRequest($endpointUri, $headers, $json);
+        return $this->httpRequester->performIngestion($endpointUri, $headers, $json);
     }
 
     private function modifyUri(UriInterface $uri): UriInterface
@@ -37,8 +37,8 @@ class CustomTestHttpRequester implements HttpRequester
         );
     }
 
-    public function executeSchemaRequest(UriInterface $endpointUri, array $headers): string
+    public function fetchSchema(UriInterface $endpointUri, array $headers): string
     {
-        return $this->httpRequester->executeSchemaRequest($endpointUri, $headers);
+        return $this->httpRequester->fetchSchema($endpointUri, $headers);
     }
 }
