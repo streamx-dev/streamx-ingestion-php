@@ -27,7 +27,7 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
             StreamxResponse::success(836383, $key));
 
         $this->client = StreamxClientBuilders::create(self::$server->getServerRoot())
-            ->setIngestionEndpointBaseUri('/custom-ingestion/v2')
+            ->setIngestionEndpointBasePath('/custom-ingestion/v2')
             ->build();
 
         // When

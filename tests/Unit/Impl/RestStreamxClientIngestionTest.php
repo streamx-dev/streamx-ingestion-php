@@ -618,7 +618,7 @@ class RestStreamxClientIngestionTest extends MockServerTestCase
             'Relative URI is not supported.');
 
         // When
-        $this->client = StreamxClientBuilders::create($serverUrl)->build();
+        StreamxClientBuilders::create($serverUrl)->build()->newPublisher('any', 'any');
     }
 
     /** @test */
@@ -633,7 +633,7 @@ class RestStreamxClientIngestionTest extends MockServerTestCase
             'Unable to parse URI: https:///url-without-host/ingestion/v1');
 
         // When
-        $this->client = StreamxClientBuilders::create($serverUrl)->build();
+        StreamxClientBuilders::create($serverUrl)->build()->newPublisher('any', 'any');
     }
 
     /** @test */
@@ -648,7 +648,7 @@ class RestStreamxClientIngestionTest extends MockServerTestCase
             'Relative URI is not supported.');
 
         // When
-        $this->client = StreamxClientBuilders::create($serverUrl)->build();
+        StreamxClientBuilders::create($serverUrl)->build()->newPublisher('any', 'any');
     }
 
     private function assertSuccessResult($response, int $expectedEventTime, string $expectedKey): void

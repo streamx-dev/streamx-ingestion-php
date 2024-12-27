@@ -18,13 +18,12 @@ class RestStreamxClient implements StreamxClient
      */
     public function __construct(
         string $serverUrl,
-        string $ingestionEndpointPath,
+        string $ingestionEndpointBasePath,
         ?string $authToken,
         HttpRequester $httpRequester,
         JsonProvider $jsonProvider
     ) {
-        $ingestionEndpointUri = HttpUtils::buildAbsoluteUri($serverUrl . $ingestionEndpointPath);
-        $this->publisherProvider = new RestPublisherProvider($ingestionEndpointUri, $authToken,
+        $this->publisherProvider = new RestPublisherProvider($serverUrl, $ingestionEndpointBasePath, $authToken,
             $httpRequester, $jsonProvider);
     }
 

@@ -10,6 +10,7 @@ use Streamx\Clients\Ingestion\Impl\MessageStatus;
  */
 abstract class Publisher
 {
+    public abstract function isIngestionServiceAvailable(): bool;
 
     /**
      * Performs ingestion endpoint `publish` command.

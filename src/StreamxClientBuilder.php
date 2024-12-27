@@ -16,11 +16,10 @@ interface StreamxClientBuilder
     /**
      * Configures custom StreamX REST Ingestion base path. Default value is
      * {@link StreamxClient::INGESTION_ENDPOINT_BASE_PATH}.
-     * @param string $ingestionEndpointBaseUri StreamX REST Ingestion base path.
+     * @param string $ingestionEndpointBasePath StreamX REST Ingestion base path.
      * @return StreamxClientBuilder
      */
-    public function setIngestionEndpointBaseUri(string $ingestionEndpointBaseUri
-    ): StreamxClientBuilder;
+    public function setIngestionEndpointBasePath(string $ingestionEndpointBasePath): StreamxClientBuilder;
 
     /**
      * Configures authentication token.
