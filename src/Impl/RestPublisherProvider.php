@@ -9,19 +9,21 @@ use Streamx\Clients\Ingestion\Publisher\Publisher;
 
 class RestPublisherProvider
 {
-
-    private UriInterface $ingestionEndpointBaseUri;
+    private string $serverUrl;
+    private string $ingestionEndpointBasePath;
     private ?string $authToken;
     private HttpRequester $httpRequester;
     private JsonProvider $jsonProvider;
 
     public function __construct(
-        UriInterface $ingestionEndpointBaseUri,
+        string $serverUrl,
+        string $ingestionEndpointBasePath,
         ?string $authToken,
         HttpRequester $httpRequester,
         JsonProvider $jsonProvider)
     {
-        $this->ingestionEndpointBaseUri = $ingestionEndpointBaseUri;
+        $this->serverUrl = $serverUrl;
+        $this->ingestionEndpointBasePath = $ingestionEndpointBasePath;
         $this->authToken = $authToken;
         $this->httpRequester = $httpRequester;
         $this->jsonProvider = $jsonProvider;
@@ -30,7 +32,8 @@ class RestPublisherProvider
     public function newPublisher(string $channel, string $channelSchemaName): Publisher
     {
         return new RestPublisher(
-            $this->ingestionEndpointBaseUri,
+            $this->serverUrl,
+            $this->ingestionEndpointBasePath,
             $channel,
             $channelSchemaName,
             $this->authToken,

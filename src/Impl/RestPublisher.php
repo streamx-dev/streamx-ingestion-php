@@ -4,7 +4,6 @@ namespace Streamx\Clients\Ingestion\Impl;
 
 use InvalidArgumentException;
 use Psr\Http\Message\UriInterface;
-use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientExceptionFactory;
 use Streamx\Clients\Ingestion\Impl\Utils\HttpUtils;
 use Streamx\Clients\Ingestion\Publisher\HttpRequester;
@@ -15,10 +14,12 @@ use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 
 class RestPublisher extends Publisher
 {
-    private const INGESTION_ENDPOINT_RELATIVE_PATH = "channels/[CHANNEL]/messages";
-    private const SCHEMA_ENDPOINT_RELATIVE_PATH = "channels/[CHANNEL]/schema";
+    private const HEALTH_CHECK_ENDPOINT_PATH_TEMPLATE = '%s/q/health';
+    private const INGESTION_ENDPOINT_PATH_TEMPLATE = '%s/channels/%s/messages';
+    private const SCHEMA_ENDPOINT_PATH_TEMPLATE = '%s/channels/%s/schema';
 
     private array $headers;
+    private UriInterface $healthCheckEndpointUri;
     private UriInterface $ingestionEndpointUri;
     private UriInterface $schemaEndpointUri;
     private string $payloadTypeName;
@@ -26,16 +27,19 @@ class RestPublisher extends Publisher
     private JsonProvider $jsonProvider;
 
     public function __construct(
-        UriInterface $ingestionEndpointBaseUri,
+        string $serverUrl,
+        string $ingestionEndpointBasePath,
         string $channel,
         string $channelSchemaName,
         ?string $authToken,
         HttpRequester $httpRequester,
         JsonProvider $jsonProvider
     ) {
+        $ingestionEndpointBaseUri = HttpUtils::buildAbsoluteUri($serverUrl . $ingestionEndpointBasePath);
         $this->headers = $this->buildHttpHeaders($authToken);
-        $this->ingestionEndpointUri = self::buildUri($ingestionEndpointBaseUri, self::INGESTION_ENDPOINT_RELATIVE_PATH, $channel);
-        $this->schemaEndpointUri = self::buildUri($ingestionEndpointBaseUri, self::SCHEMA_ENDPOINT_RELATIVE_PATH, $channel);
+        $this->healthCheckEndpointUri = HttpUtils::buildUri(sprintf(self::HEALTH_CHECK_ENDPOINT_PATH_TEMPLATE, $serverUrl));
+        $this->ingestionEndpointUri = HttpUtils::buildUri(sprintf(self::INGESTION_ENDPOINT_PATH_TEMPLATE, $ingestionEndpointBaseUri, $channel));
+        $this->schemaEndpointUri = HttpUtils::buildUri(sprintf(self::SCHEMA_ENDPOINT_PATH_TEMPLATE, $ingestionEndpointBaseUri, $channel));
         $this->payloadTypeName = self::convertToPayloadTypeName($channelSchemaName);
         $this->httpRequester = $httpRequester;
         $this->jsonProvider = $jsonProvider;
@@ -49,6 +53,11 @@ class RestPublisher extends Publisher
             throw new InvalidArgumentException("Expected the provided channel schema name '$channelSchemaName' to end with 'IngestionMessage'");
         }
         return $payloadTypeName;
+    }
+
+    public function isIngestionServiceAvailable(): bool
+    {
+        return $this->httpRequester->isIngestionServiceAvailable($this->healthCheckEndpointUri);
     }
 
     public function send(Message $message): SuccessResult
@@ -90,12 +99,4 @@ class RestPublisher extends Publisher
         return ['Authorization' => 'Bearer ' . $authToken];
     }
 
-    /**
-     * @throws StreamxClientException
-     */
-    private static function buildUri(UriInterface $ingestionEndpointBaseUri, string $relativePath, string $channel): UriInterface
-    {
-        $uriString = str_replace('[CHANNEL]', $channel, "$ingestionEndpointBaseUri/$relativePath");
-        return HttpUtils::buildUri($uriString);
-    }
 }

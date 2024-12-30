@@ -12,6 +12,16 @@ use Streamx\Clients\Ingestion\Impl\MessageStatus;
 interface HttpRequester
 {
     /**
+     * Performs Ingestion Service Health Check using the provided endpoint
+     * @param UriInterface $endpointUri Health Check endpoint URI.
+     * @return true if the Health Check returns status UP, false otherwise.
+     * @throws StreamxClientException if request failed.
+     */
+    public function isIngestionServiceAvailable(
+        UriInterface $endpointUri
+    ): bool;
+
+    /**
      * Executes a StreamX Ingestion POST request.
      * @param UriInterface $endpointUri Request target URI.
      * @param array $headers Request headers.

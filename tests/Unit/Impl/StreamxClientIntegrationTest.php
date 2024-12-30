@@ -53,9 +53,11 @@ class StreamxClientIntegrationTest extends TestCase {
 
     private static function skipTestsIfStreamxIsNotAvailable(): void {
         try {
-            self::$publisher->fetchSchema();
+            if (!self::$publisher->isIngestionServiceAvailable()) {
+                self::markTestSkipped('Skipping test because StreamX is not available');
+            }
         } catch (Exception $e) {
-            self::markTestSkipped('Skipping test because StreamX is not accessible: ' . $e->getTraceAsString());
+            self::markTestSkipped('Skipping test because of exception checking if StreamX is available: ' . $e->getTraceAsString());
         }
     }
 
@@ -170,6 +172,15 @@ class StreamxClientIntegrationTest extends TestCase {
             $this->assertEquals($inputMessageKeys[$i], $result->getSuccess()->getKey());
             $this->assertIsInt($result->getSuccess()->getEventTime());
         }
+    }
+
+    /** @test */
+    public function shouldCheckIfIngestionServiceIsAvailable() {
+        // when
+        $result = self::$publisher->isIngestionServiceAvailable();
+
+        // then
+        $this->assertTrue($result);
     }
 
     /** @test */
