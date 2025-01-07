@@ -1,0 +1,33 @@
+defaultRegistry: ghcr.io/streamx-dev/streamx-blueprints
+defaultImageTag: 1.0.1-jvm
+
+sources:
+  connector:
+    outgoing:
+      - "pages"
+
+ingestion:
+  rest-ingestion:
+    environment:
+      QUARKUS_HTTP_AUTH_PERMISSION_BEARER_POLICY: "permit"
+
+processing:
+  blueprint-relay-pages:
+    image: relay-processing-service
+    incoming:
+      messages:
+        topic: inboxes/pages
+    outgoing:
+      relayed-messages:
+        topic: outboxes/pages
+    environment:
+      MP_MESSAGING_INCOMING_MESSAGES_SCHEMA: "page-schema"
+      MP_MESSAGING_OUTGOING_RELAYED-MESSAGES_SCHEMA: "page-schema"
+
+delivery:
+  blueprint-web:
+    image: web-delivery-service
+    incoming:
+      pages:
+        topic: outboxes/pages
+    port: 8081
