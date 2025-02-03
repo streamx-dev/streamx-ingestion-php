@@ -13,12 +13,8 @@ use Streamx\Clients\Ingestion\Tests\Testing\Model\Content;
 use Streamx\Clients\Ingestion\Tests\Testing\Model\Page;
 
 /**
- * Integration test to be executed manually on demand.
- * To do so, remove first slash from each @test header above the test methods to be executed.
- * Requirements: running StreamX instance, with:
- *  - ingestion service available at http://localhost:8080
- *  - web delivery service available at http://localhost:8081
- * If you need to configure those requirements to match to your StreamX instance - please don't commit such changes
+ * This Integration Test requires a running StreamX instance.
+ * You can use tests/resources/mesh.yaml as minimal mesh setup.
  */
 class StreamxClientIntegrationTest extends TestCase {
 
