@@ -78,7 +78,8 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
         $messageStatus = MessageStatus::ofSuccess(new SuccessResult(937493, $key));
 
         $responseBodyMock = $this->createMock(StreamInterface::class);
-        $responseBodyMock->method('__toString')->willReturn(json_encode($messageStatus));
+        $responseBodyMock->method('eof')->willReturn(false, true);
+        $responseBodyMock->method('read')->willReturn(json_encode($messageStatus));
     
         $responseMock = $this->createMock(ResponseInterface::class);
         $responseMock->method('getStatusCode')->willReturn(202);
