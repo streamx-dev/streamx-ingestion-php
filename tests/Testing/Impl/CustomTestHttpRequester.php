@@ -5,7 +5,6 @@ namespace Streamx\Clients\Ingestion\Tests\Testing\Impl;
 use Psr\Http\Message\UriInterface;
 use Streamx\Clients\Ingestion\Impl\GuzzleHttpRequester;
 use Streamx\Clients\Ingestion\Publisher\HttpRequester;
-use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 use Streamx\Clients\Ingestion\StreamxClient;
 
 class CustomTestHttpRequester implements HttpRequester
@@ -18,11 +17,6 @@ class CustomTestHttpRequester implements HttpRequester
     {
         $this->ingestionEndpointPath = $ingestionEndpointPath;
         $this->httpRequester = new GuzzleHttpRequester();
-    }
-
-    public function isIngestionServiceAvailable(UriInterface $endpointUri): bool
-    {
-        return $this->httpRequester->isIngestionServiceAvailable($endpointUri);
     }
 
     public function performIngestion(UriInterface $endpointUri, array $headers,string $json): array

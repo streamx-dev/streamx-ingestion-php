@@ -14,12 +14,10 @@ use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 
 class RestPublisher extends Publisher
 {
-    private const HEALTH_CHECK_ENDPOINT_PATH_TEMPLATE = '%s/q/health';
     private const INGESTION_ENDPOINT_PATH_TEMPLATE = '%s/channels/%s/messages';
     private const SCHEMA_ENDPOINT_PATH_TEMPLATE = '%s/channels/%s/schema';
 
     private array $headers;
-    private UriInterface $healthCheckEndpointUri;
     private UriInterface $ingestionEndpointUri;
     private UriInterface $schemaEndpointUri;
     private string $payloadTypeName;
@@ -37,7 +35,6 @@ class RestPublisher extends Publisher
     ) {
         $ingestionEndpointBaseUri = HttpUtils::buildAbsoluteUri($serverUrl . $ingestionEndpointBasePath);
         $this->headers = $this->buildHttpHeaders($authToken);
-        $this->healthCheckEndpointUri = HttpUtils::buildUri(sprintf(self::HEALTH_CHECK_ENDPOINT_PATH_TEMPLATE, $serverUrl));
         $this->ingestionEndpointUri = HttpUtils::buildUri(sprintf(self::INGESTION_ENDPOINT_PATH_TEMPLATE, $ingestionEndpointBaseUri, $channel));
         $this->schemaEndpointUri = HttpUtils::buildUri(sprintf(self::SCHEMA_ENDPOINT_PATH_TEMPLATE, $ingestionEndpointBaseUri, $channel));
         $this->payloadTypeName = self::convertToPayloadTypeName($channelSchemaName);
@@ -53,11 +50,6 @@ class RestPublisher extends Publisher
             throw new InvalidArgumentException("Expected the provided channel schema name '$channelSchemaName' to end with 'IngestionMessage'");
         }
         return $payloadTypeName;
-    }
-
-    public function isIngestionServiceAvailable(): bool
-    {
-        return $this->httpRequester->isIngestionServiceAvailable($this->healthCheckEndpointUri);
     }
 
     public function send(Message $message): SuccessResult

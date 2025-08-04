@@ -1,7 +1,7 @@
 {
   "name": "streamx/ingestion-client",
   "description": "PHP ingestion client for StreamX - a Digital Experience Data Mesh.",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "type": "library",
   "license": "Apache-2.0",
   "autoload": {
@@ -23,6 +23,7 @@
     "ext-xdebug": "*",
     "donatj/mock-webserver": "^2.7",
     "ext-mbstring": "*",
-    "nyholm/psr7": "^1.8"
+    "nyholm/psr7": "^1.8",
+    "ext-curl": "*"
   }
 }

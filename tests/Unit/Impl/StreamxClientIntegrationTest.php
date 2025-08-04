@@ -2,7 +2,6 @@
 
 namespace Streamx\Clients\Ingestion\Tests\Unit\Impl;
 
-use Exception;
 use PHPUnit\Framework\TestCase;
 use Streamx\Clients\Ingestion\Impl\MessageStatus;
 use Streamx\Clients\Ingestion\StreamXClient;
@@ -39,22 +38,29 @@ class StreamxClientIntegrationTest extends TestCase {
     private static array $pageArray;
 
     public static function setUpBeforeClass(): void {
+        if (!self::isStreamxAvailable()) {
+            self::markTestSkipped('Skipping test because StreamX is not available');
+        }
+
         self::$client = StreamxClientBuilders::create(self::INGESTION_BASE_URL)->build();
         self::$publisher = self::$client->newPublisher(self::PAGES_CHANNEL, self::PAGE_SCHEMA_NAME);
         self::$page = new Page(new Content(self::CONTENT));
         self::$pageArray = ['content' => ['bytes' => self::CONTENT]];
-
-        self::skipTestsIfStreamxIsNotAvailable();
     }
 
-    private static function skipTestsIfStreamxIsNotAvailable(): void {
-        try {
-            if (!self::$publisher->isIngestionServiceAvailable()) {
-                self::markTestSkipped('Skipping test because StreamX is not available');
-            }
-        } catch (Exception $e) {
-            self::markTestSkipped('Skipping test because of exception checking if StreamX is available: ' . $e->getTraceAsString());
-        }
+    private static function isStreamxAvailable(): bool {
+        $ch = curl_init(self::INGESTION_BASE_URL . '/q/health');
+
+        curl_setopt($ch, CURLOPT_NOBODY, true);         // Don't download body
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Prevent output
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);           // Timeout in seconds
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Follow redirects
+
+        curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        return $httpCode >= 200 && $httpCode < 400;
     }
 
     /** @test */
@@ -168,15 +174,6 @@ class StreamxClientIntegrationTest extends TestCase {
             $this->assertEquals($inputMessageKeys[$i], $result->getSuccess()->getKey());
             $this->assertIsInt($result->getSuccess()->getEventTime());
         }
-    }
-
-    /** @test */
-    public function shouldCheckIfIngestionServiceIsAvailable() {
-        // when
-        $result = self::$publisher->isIngestionServiceAvailable();
-
-        // then
-        $this->assertTrue($result);
     }
 
     /** @test */

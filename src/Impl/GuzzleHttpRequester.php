@@ -24,18 +24,6 @@ class GuzzleHttpRequester implements HttpRequester
         $this->httpClient = $httpClient ?? new GuzzleHttpClient();
     }
 
-    public function isIngestionServiceAvailable(UriInterface $endpointUri): bool {
-        try {
-            $request = new Request('GET', $endpointUri);
-            $response = $this->httpClient->sendRequest($request);
-            return $this->parseHealthCheckResponse($response);
-        } catch (ClientExceptionInterface $e) {
-            throw new StreamxClientException(
-                sprintf('HealthCheck GET request with URI: %s failed due to HTTP client error', $endpointUri),
-                $e);
-        }
-    }
-
     public function performIngestion(UriInterface $endpointUri, array $headers, string $json): array {
         try {
             $request = new Request('POST', $endpointUri, $headers, $json);
@@ -58,17 +46,6 @@ class GuzzleHttpRequester implements HttpRequester
                 sprintf('Schema GET request with URI: %s failed due to HTTP client error', $endpointUri),
                 $e);
         }
-    }
-
-    private function parseHealthCheckResponse(ResponseInterface $response): bool
-    {
-        if ($response->getStatusCode() == 200) {
-            $responseAsArray = json_decode((string)$response->getBody(), true);
-            if (json_last_error() === JSON_ERROR_NONE) {
-                return isset($responseAsArray['status']) && $responseAsArray['status'] === 'UP';
-            }
-        }
-        return false;
     }
 
     /**
