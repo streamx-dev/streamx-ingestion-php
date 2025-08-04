@@ -49,9 +49,9 @@ class RestPublisher extends Publisher
         return $payloadTypeName;
     }
 
-    public function send(Message $message): SuccessResult
+    public function send(Message $message, array $additionalRequestOptions = []): SuccessResult
     {
-        $messageStatus = $this->sendMulti([$message])[0];
+        $messageStatus = $this->sendMulti([$message], $additionalRequestOptions)[0];
 
         if ($messageStatus->getSuccess() != null) {
             return $messageStatus->getSuccess();
@@ -64,7 +64,7 @@ class RestPublisher extends Publisher
         );
     }
 
-    public function sendMulti(array $messages): array
+    public function sendMulti(array $messages, array $additionalRequestOptions = []): array
     {
         $multiMessageJson = '';
         foreach ($messages as $message) {
@@ -72,7 +72,7 @@ class RestPublisher extends Publisher
         }
 
         $actualHeaders = array_merge($this->headers, ['Content-Type' => 'application/json; charset=UTF-8']);
-        return $this->httpRequester->performIngestion($this->ingestionEndpointUri, $actualHeaders, $multiMessageJson);
+        return $this->httpRequester->performIngestion($this->ingestionEndpointUri, $actualHeaders, $multiMessageJson, $additionalRequestOptions);
     }
 
     private function buildHttpHeaders(?string $authToken): array

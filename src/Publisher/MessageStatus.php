@@ -1,11 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Streamx\Clients\Ingestion\Impl;
+namespace Streamx\Clients\Ingestion\Publisher;
 
 use JsonSerializable;
 use stdClass;
 use Streamx\Clients\Ingestion\Impl\Utils\PropertyRetriever;
-use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 
 class MessageStatus implements JsonSerializable
 {
