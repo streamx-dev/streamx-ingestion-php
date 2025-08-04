@@ -62,32 +62,10 @@ class MockServerTestCase extends TestCase
         string $expectedBody,
         array $headers = null
     ): void {
-        $this->assertRequest($request, 'POST', $uri, $expectedBody, $headers);
-    }
-
-    protected function assertSchemaRequest(
-        RequestInfo $request,
-        string $uri,
-        array $headers = null
-    ): void {
-        $this->assertRequest($request, 'GET', $uri, null, $headers);
-    }
-
-    private function assertRequest(
-        RequestInfo $request,
-        string $expectedMethod,
-        string $uri,
-        ?string $expectedBody,
-        array $headers = null
-    ): void {
-        $this->assertEquals($expectedMethod, $request->getRequestMethod());
+        $this->assertEquals('POST', $request->getRequestMethod());
         $this->assertEquals($uri, $request->getRequestUri());
         $this->assertEquals($expectedBody, $request->getInput());
-        if ($expectedMethod === 'GET') {
-            $this->assertNotContains('Content-Type', array_keys($request->getHeaders()));
-        } else {
-            $this->assertEquals('application/json; charset=UTF-8', $request->getHeaders()['Content-Type']);
-        }
+        $this->assertEquals('application/json; charset=UTF-8', $request->getHeaders()['Content-Type']);
         $this->assertHeaders($request, $headers);
     }
 

@@ -2,7 +2,6 @@
 
 namespace Streamx\Clients\Ingestion\Impl;
 
-use Psr\Http\Message\UriInterface;
 use Streamx\Clients\Ingestion\Publisher\HttpRequester;
 use Streamx\Clients\Ingestion\Publisher\JsonProvider;
 use Streamx\Clients\Ingestion\Publisher\Publisher;

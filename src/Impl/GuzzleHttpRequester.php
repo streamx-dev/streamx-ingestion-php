@@ -36,18 +36,6 @@ class GuzzleHttpRequester implements HttpRequester
         }
     }
 
-    public function fetchSchema(UriInterface $endpointUri, array $headers): string {
-        try {
-            $request = new Request('GET', $endpointUri, $headers);
-            $response = $this->httpClient->sendRequest($request);
-            return $this->handleSchemaResponse($response);
-        } catch (ClientExceptionInterface $e) {
-            throw new StreamxClientException(
-                sprintf('Schema GET request with URI: %s failed due to HTTP client error', $endpointUri),
-                $e);
-        }
-    }
-
     /**
      * @return MessageStatus[]
      * @throws StreamxClientException
@@ -64,22 +52,6 @@ class GuzzleHttpRequester implements HttpRequester
             case in_array($statusCode, [400, 403, 500]):
                 $failureResponse = $this->parseFailureResponse($response);
                 throw $this->streamxClientExceptionFrom($failureResponse);
-            default:
-                throw $this->createGenericCommunicationException($response);
-        }
-    }
-
-    /**
-     * @throws StreamxClientException
-     */
-    private function handleSchemaResponse(ResponseInterface $response): string
-    {
-        $statusCode = $response->getStatusCode();
-        switch ($statusCode) {
-            case 200:
-                return (string)$response->getBody();
-            case 401:
-                throw $this->createAuthenticationException();
             default:
                 throw $this->createGenericCommunicationException($response);
         }

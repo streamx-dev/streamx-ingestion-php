@@ -32,9 +32,4 @@ class CustomTestHttpRequester implements HttpRequester
                 $this->ingestionEndpointPath, $uri->getPath())
         );
     }
-
-    public function fetchSchema(UriInterface $endpointUri, array $headers): string
-    {
-        return $this->httpRequester->fetchSchema($endpointUri, $headers);
-    }
 }
