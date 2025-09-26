@@ -65,9 +65,6 @@ $pagesPublisher->send($message);
 
 // The Publisher enables you to retrieve the channel schema (as Json String) by invoking the following method:
 $pagesPublisher->fetchSchema();
-
-// You can also check the availability of the Ingestion Service, by calling the below method that returns true or false:
-$pagesPublisher->isIngestionServiceAvailable();
 ```
 
 # Installation
