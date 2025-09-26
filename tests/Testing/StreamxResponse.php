@@ -3,8 +3,8 @@
 namespace Streamx\Clients\Ingestion\Tests\Testing;
 
 use donatj\MockWebServer\Response;
-use Streamx\Clients\Ingestion\Impl\FailureResponse;
-use Streamx\Clients\Ingestion\Impl\MessageStatus;
+use Streamx\Clients\Ingestion\Publisher\FailureResponse;
+use Streamx\Clients\Ingestion\Publisher\MessageStatus;
 use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 
 class StreamxResponse

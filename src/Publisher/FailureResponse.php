@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Streamx\Clients\Ingestion\Impl;
+namespace Streamx\Clients\Ingestion\Publisher;
 
 use JsonSerializable;
 use stdClass;

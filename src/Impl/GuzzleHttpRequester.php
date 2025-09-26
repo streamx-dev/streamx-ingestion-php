@@ -3,7 +3,7 @@
 namespace Streamx\Clients\Ingestion\Impl;
 
 use GuzzleHttp\Client as GuzzleHttpClient;
-use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\RequestOptions;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -12,7 +12,9 @@ use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientExceptionFactory;
 use Streamx\Clients\Ingestion\Impl\Utils\DataValidationException;
 use Streamx\Clients\Ingestion\Impl\Utils\MultipleJsonsSplitter;
+use Streamx\Clients\Ingestion\Publisher\FailureResponse;
 use Streamx\Clients\Ingestion\Publisher\HttpRequester;
+use Streamx\Clients\Ingestion\Publisher\MessageStatus;
 
 class GuzzleHttpRequester implements HttpRequester
 {
@@ -24,10 +26,18 @@ class GuzzleHttpRequester implements HttpRequester
         $this->httpClient = $httpClient ?? new GuzzleHttpClient();
     }
 
-    public function performIngestion(UriInterface $endpointUri, array $headers, string $json): array {
+    public function performIngestion(UriInterface $endpointUri, array $headers, string $json, array $additionalRequestOptions = []): array {
         try {
-            $request = new Request('POST', $endpointUri, $headers, $json);
-            $response = $this->httpClient->sendRequest($request);
+            $requestOptions = array_merge(
+                [
+                    RequestOptions::HEADERS => $headers,
+                    RequestOptions::BODY => $json,
+                    RequestOptions::HTTP_ERRORS => false
+                ],
+                $additionalRequestOptions
+            );
+
+            $response = $this->httpClient->request('POST', $endpointUri, $requestOptions);
             return $this->handleIngestionResponse($response);
         } catch (ClientExceptionInterface $e) {
             throw new StreamxClientException(

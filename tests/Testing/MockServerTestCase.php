@@ -11,10 +11,10 @@ use Streamx\Clients\Ingestion\StreamxClient;
 
 class MockServerTestCase extends TestCase
 {
-    protected static MockWebServer $server;
-    protected static string $pagesSchemaName;
-    protected static string $dummySchemaName;
+    private const PAGES_SCHEMA_NAME = 'dev.streamx.data.model.PageIngestionMessage';
+    private const DUMMY_SCHEMA_NAME = 'dev.streamx.data.model.DummyIngestionMessage';
 
+    protected static MockWebServer $server;
     protected StreamxClient $client;
 
     public static function setUpBeforeClass(): void
@@ -22,8 +22,6 @@ class MockServerTestCase extends TestCase
         self::$server = new MockWebServer();
         self::$server->start();
         self::$server->setDefaultResponse(StreamxResponse::success(-1, 'any'));
-        self::$pagesSchemaName = 'dev.streamx.data.model.PageIngestionMessage';
-        self::$dummySchemaName = 'dev.streamx.data.model.DummyIngestionMessage';
     }
 
     protected function setUp(): void
@@ -38,12 +36,12 @@ class MockServerTestCase extends TestCase
 
     protected function createPagesPublisher() : Publisher
     {
-        return $this->client->newPublisher("pages", self::$pagesSchemaName);
+        return $this->client->newPublisher("pages", self::PAGES_SCHEMA_NAME);
     }
 
     protected function createPublisherWithIrrelevantSchema(string $channel) : Publisher
     {
-        return $this->client->newPublisher($channel, self::$dummySchemaName);
+        return $this->client->newPublisher($channel, self::DUMMY_SCHEMA_NAME);
     }
 
     protected function defaultPublishMessageJson($key, $payload): string

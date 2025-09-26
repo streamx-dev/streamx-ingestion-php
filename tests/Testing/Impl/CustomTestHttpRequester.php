@@ -19,10 +19,10 @@ class CustomTestHttpRequester implements HttpRequester
         $this->httpRequester = new GuzzleHttpRequester();
     }
 
-    public function performIngestion(UriInterface $endpointUri, array $headers,string $json): array
+    public function performIngestion(UriInterface $endpointUri, array $headers,string $json, array $additionalRequestOptions = []): array
     {
         $endpointUri = $this->modifyUri($endpointUri);
-        return $this->httpRequester->performIngestion($endpointUri, $headers, $json);
+        return $this->httpRequester->performIngestion($endpointUri, $headers, $json, $additionalRequestOptions);
     }
 
     private function modifyUri(UriInterface $uri): UriInterface

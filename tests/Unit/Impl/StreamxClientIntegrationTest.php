@@ -3,11 +3,11 @@
 namespace Streamx\Clients\Ingestion\Tests\Unit\Impl;
 
 use PHPUnit\Framework\TestCase;
-use Streamx\Clients\Ingestion\Impl\MessageStatus;
-use Streamx\Clients\Ingestion\StreamXClient;
 use Streamx\Clients\Ingestion\Builders\StreamxClientBuilders;
 use Streamx\Clients\Ingestion\Publisher\Message;
+use Streamx\Clients\Ingestion\Publisher\MessageStatus;
 use Streamx\Clients\Ingestion\Publisher\Publisher;
+use Streamx\Clients\Ingestion\StreamXClient;
 use Streamx\Clients\Ingestion\Tests\Testing\Model\Content;
 use Streamx\Clients\Ingestion\Tests\Testing\Model\Page;
 

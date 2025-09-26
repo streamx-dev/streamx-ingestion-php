@@ -3,6 +3,7 @@
 namespace Streamx\Clients\Ingestion\Tests\Unit\Impl;
 
 use donatj\MockWebServer\ResponseStack;
+use GuzzleHttp\RequestOptions;
 use InvalidArgumentException;
 use Streamx\Clients\Ingestion\Builders\StreamxClientBuilders;
 use Streamx\Clients\Ingestion\Exceptions\ForbiddenChannelException;
@@ -12,7 +13,7 @@ use Streamx\Clients\Ingestion\Exceptions\ServerErrorException;
 use Streamx\Clients\Ingestion\Exceptions\ServiceFailureException;
 use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
 use Streamx\Clients\Ingestion\Exceptions\UnsupportedChannelException;
-use Streamx\Clients\Ingestion\Impl\FailureResponse;
+use Streamx\Clients\Ingestion\Publisher\FailureResponse;
 use Streamx\Clients\Ingestion\Publisher\Message;
 use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 use Streamx\Clients\Ingestion\Tests\Testing\MockServerTestCase;
@@ -257,6 +258,30 @@ class RestStreamxClientIngestionTest extends MockServerTestCase
             $this->defaultPublishMessageJson($key, '{"message":"\u00a1Hola, \ud83c\udf0d!"}'));
 
         $this->assertSuccessResult($result, 100298, $key);
+    }
+
+    /** @test */
+    public function shouldAllowOverwritingRequestOptions()
+    {
+        // Given
+        $key = "key";
+        $data = new Data('Hello World');
+
+        self::$server->setResponseOfPath('/ingestion/v1/channels/pages/messages',
+            StreamxResponse::success(123, $key));
+
+        // When
+        $result = $this->createPagesPublisher()->publish($key, $data, [
+            RequestOptions::TIMEOUT => 60,
+            RequestOptions::BODY => 'Overwritten body'
+        ]);
+
+        // Then
+        $this->assertIngestionRequest(self::$server->getLastRequest(),
+            '/ingestion/v1/channels/pages/messages',
+            'Overwritten body');
+
+        $this->assertSuccessResult($result, 123, $key);
     }
 
     /** @test */
