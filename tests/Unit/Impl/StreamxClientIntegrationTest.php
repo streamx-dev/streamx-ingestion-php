@@ -176,24 +176,6 @@ class StreamxClientIntegrationTest extends TestCase {
         }
     }
 
-    /** @test */
-    public function shouldFetchChannelSchema() {
-        // when
-        $schemaJson = self::$publisher->fetchSchema();
-
-        // then
-        $schemaArray = json_decode($schemaJson, true);
-        $this->assertEquals('record', $schemaArray['type']);
-        $this->assertEquals('PageIngestionMessage', $schemaArray['name']);
-        $this->assertEquals('dev.streamx.blueprints.data', $schemaArray['namespace']);
-
-        $fieldNames = [];
-        foreach ($schemaArray['fields'] as $field) {
-            $fieldNames[] = $field['name'];
-        }
-        $this->assertEquals(['key', 'action', 'eventTime', 'properties', 'payload'], $fieldNames);
-    }
-
     private function assertPageIsPublished(string $key) {
         $url = self::DELIVERY_BASE_URL . '/' . $key;
     

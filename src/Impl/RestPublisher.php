@@ -15,11 +15,9 @@ use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 class RestPublisher extends Publisher
 {
     private const INGESTION_ENDPOINT_PATH_TEMPLATE = '%s/channels/%s/messages';
-    private const SCHEMA_ENDPOINT_PATH_TEMPLATE = '%s/channels/%s/schema';
 
     private array $headers;
     private UriInterface $ingestionEndpointUri;
-    private UriInterface $schemaEndpointUri;
     private string $payloadTypeName;
     private HttpRequester $httpRequester;
     private JsonProvider $jsonProvider;
@@ -36,7 +34,6 @@ class RestPublisher extends Publisher
         $ingestionEndpointBaseUri = HttpUtils::buildAbsoluteUri($serverUrl . $ingestionEndpointBasePath);
         $this->headers = $this->buildHttpHeaders($authToken);
         $this->ingestionEndpointUri = HttpUtils::buildUri(sprintf(self::INGESTION_ENDPOINT_PATH_TEMPLATE, $ingestionEndpointBaseUri, $channel));
-        $this->schemaEndpointUri = HttpUtils::buildUri(sprintf(self::SCHEMA_ENDPOINT_PATH_TEMPLATE, $ingestionEndpointBaseUri, $channel));
         $this->payloadTypeName = self::convertToPayloadTypeName($channelSchemaName);
         $this->httpRequester = $httpRequester;
         $this->jsonProvider = $jsonProvider;
@@ -76,11 +73,6 @@ class RestPublisher extends Publisher
 
         $actualHeaders = array_merge($this->headers, ['Content-Type' => 'application/json; charset=UTF-8']);
         return $this->httpRequester->performIngestion($this->ingestionEndpointUri, $actualHeaders, $multiMessageJson);
-    }
-
-    public function fetchSchema(): string
-    {
-        return $this->httpRequester->fetchSchema($this->schemaEndpointUri, $this->headers);
     }
 
     private function buildHttpHeaders(?string $authToken): array

@@ -2,8 +2,6 @@
 
 namespace Streamx\Clients\Ingestion\Impl;
 
-use Streamx\Clients\Ingestion\Exceptions\StreamxClientException;
-use Streamx\Clients\Ingestion\Impl\Utils\HttpUtils;
 use Streamx\Clients\Ingestion\Publisher\HttpRequester;
 use Streamx\Clients\Ingestion\Publisher\JsonProvider;
 use Streamx\Clients\Ingestion\Publisher\Publisher;
@@ -13,9 +11,6 @@ class RestStreamxClient implements StreamxClient
 {
     private RestPublisherProvider $publisherProvider;
 
-    /**
-     * @throws StreamxClientException
-     */
     public function __construct(
         string $serverUrl,
         string $ingestionEndpointBasePath,

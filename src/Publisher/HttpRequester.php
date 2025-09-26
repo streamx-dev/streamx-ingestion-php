@@ -24,16 +24,4 @@ interface HttpRequester
         array $headers,
         string $json
     ): array;
-
-    /**
-     * Executes a StreamX Schema GET request.
-     * @param UriInterface $endpointUri Request target URI.
-     * @param array $headers Request headers.
-     * @return string response of the endpoint.
-     * @throws StreamxClientException if request failed.
-     */
-    public function fetchSchema(
-        UriInterface $endpointUri,
-        array $headers
-    ): string;
 }

@@ -50,9 +50,4 @@ abstract class Publisher
      * @throws StreamxClientException If a critical error occurred and the MessageStatus[] with SuccessResult and/or FailureResponse cannot be returned.
      */
     public abstract function sendMulti(array $messages): array;
-
-    /**
-     * @return string schema of the Publisher's channel
-     */
-    public abstract function fetchSchema(): string;
 }
