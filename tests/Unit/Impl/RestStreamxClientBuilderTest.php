@@ -2,16 +2,17 @@
 
 namespace Streamx\Clients\Ingestion\Tests\Unit\Impl;
 
-use Psr\Http\Client\ClientInterface;
+use GuzzleHttp\Client;
+use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 use Streamx\Clients\Ingestion\Builders\StreamxClientBuilders;
-use Streamx\Clients\Ingestion\Impl\MessageStatus;
+use Streamx\Clients\Ingestion\Publisher\MessageStatus;
+use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 use Streamx\Clients\Ingestion\Tests\Testing\Impl\CustomTestHttpRequester;
 use Streamx\Clients\Ingestion\Tests\Testing\Impl\CustomTestJsonProvider;
 use Streamx\Clients\Ingestion\Tests\Testing\MockServerTestCase;
 use Streamx\Clients\Ingestion\Tests\Testing\StreamxResponse;
-use Streamx\Clients\Ingestion\Publisher\SuccessResult;
 
 class RestStreamxClientBuilderTest extends MockServerTestCase
 {
@@ -93,14 +94,14 @@ class RestStreamxClientBuilderTest extends MockServerTestCase
         $responseMock->method('getStatusCode')->willReturn(202);
         $responseMock->method('getBody')->willReturn($responseBodyMock);
 
-        $clientMock = $this->createMock(ClientInterface::class);
-        $clientMock->method('sendRequest')->willReturnCallback(function($req) use ($url, $responseMock) 
+        $clientMock = $this->createMock(Client::class);
+        $clientMock->method('request')->willReturnCallback(function($method, $uri, $options) use ($url, $responseMock)
         {
             $options = [
                 'http' => [
-                    'method'  => 'POST',
+                    'method'  => $method,
                     'header'  => "Content-Type: application/json; charset=UTF-8\r\nX-StreamX: Custom http client",
-                    'content' => (string) $req->getBody(),
+                    'content' => $options[RequestOptions::BODY],
                 ],
             ];
 
