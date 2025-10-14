@@ -1,0 +1,47 @@
+name: Release as new version
+
+on: [workflow_dispatch]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Set up SSH with deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Edit composer.json to bump version
+        run: |
+          CURRENT_VERSION=$(grep '"version":' composer.json | cut -d '"' -f 4)
+          NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. '{print $1 "." $2 "." ($3+1)}')
+          echo "Bumping version in composer.json from $CURRENT_VERSION to $NEW_VERSION"
+          sed -i 's/"version": "'"$CURRENT_VERSION"'"/"version": "'"$NEW_VERSION"'"/g' composer.json
+          echo "PROJECT_NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
+      - name: Push version bump as new tag
+        run: |
+          git config --global user.email "github.actions@streamx.dev"
+          git config --global user.name "${GITHUB_ACTOR}"
+          git add composer.json
+          git commit -m "[no ci] Release ${{ env.PROJECT_NEW_VERSION }}"
+          git tag ${{ env.PROJECT_NEW_VERSION }}
+          git push origin ${{ github.ref_name }} --tags
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.PROJECT_NEW_VERSION }}
+          name: ${{ env.PROJECT_NEW_VERSION }}
+          generate_release_notes: true
+
+      - name: Summary and next steps
+        run: |
+          echo "To make the new version publicly available via Composer, go to https://packagist.org/packages/streamx/ingestion-client and click Update"
